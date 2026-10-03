@@ -9,6 +9,7 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module';
     MerchantsModule,
     ApiKeysModule,
     AuthModule,
+    PaymentsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
