@@ -1,0 +1,337 @@
+<div class="checkout">
+  <header class="topbar">
+    <span class="brand"
+      ><span class="brand-mark"><app-icon name="card" [size]="16" /></span>Pasarela</span
+    >
+    <span class="badge-test" title="Ningún cobro es real">Modo test</span>
+  </header>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <div class="layout" aria-busy="true">
+        <div class="card summary skeleton" style="height: 14rem"></div>
+        <div class="card skeleton" style="height: 22rem"></div>
+      </div>
+    }
+    @case ('invalid') {
+      <div class="card notice" data-testid="checkout-invalid">
+        <app-icon name="alert" [size]="28" />
+        <h1>Enlace de pago no válido</h1>
+        <p class="muted">El enlace está incompleto o ya no existe. Pide al comercio uno nuevo.</p>
+      </div>
+    }
+    @case ('error') {
+      <div class="card notice">
+        <app-icon name="alert" [size]="28" />
+        <h1>No pudimos cargar el pago</h1>
+        <p class="muted">Revisa tu conexión e inténtalo de nuevo.</p>
+        <button type="button" class="btn btn-primary" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @case ('ready') {
+      @if (view(); as v) {
+        <div class="layout">
+          <aside class="card summary" aria-label="Resumen del pago">
+            <p class="muted small">Pagar a</p>
+            <h1 data-testid="checkout-merchant">{{ v.merchant.business_name }}</h1>
+            @if (v.description) {
+              <p class="description" data-testid="checkout-description">{{ v.description }}</p>
+            }
+            <p class="amount-lg" data-testid="checkout-amount">{{ v.amount | cop }}</p>
+            <p class="small muted mono">Referencia {{ v.id }}</p>
+            <p class="secure small">
+              <app-icon name="lock" [size]="14" /> Los datos de la tarjeta se tokenizan: la pasarela
+              nunca guarda el número completo ni el CVC.
+            </p>
+          </aside>
+
+          <main class="card pay" data-testid="checkout-panel">
+            @switch (v.status) {
+              @case ('succeeded') {
+                <div class="result result-ok" role="status" data-testid="checkout-result">
+                  <span class="result-icon"><app-icon name="check" [size]="28" /></span>
+                  <h2>¡Pago exitoso!</h2>
+                  <p>
+                    Pagaste <strong>{{ v.amount | cop }}</strong> a {{ v.merchant.business_name }}.
+                  </p>
+                  @if (v.payment_method; as pm) {
+                    <p class="muted small" data-testid="checkout-paid-with">
+                      @switch (pm.type) {
+                        @case ('card') {
+                          {{ brandLabelOf(pm.card?.brand) }} •••• {{ pm.card?.last4 }}
+                        }
+                        @case ('pse') {
+                          PSE · {{ pm.pse?.bank_name }}
+                        }
+                        @case ('nequi') {
+                          Nequi · ••• {{ pm.nequi?.phone_last4 }}
+                        }
+                      }
+                    </p>
+                  }
+                  @if (v.amount_refunded > 0) {
+                    <p class="alert alert-info">
+                      El comercio reembolsó {{ v.amount_refunded | cop }} de este pago.
+                    </p>
+                  }
+                  @if (v.return_url) {
+                    <a class="btn btn-primary" [href]="v.return_url">Volver al comercio</a>
+                  }
+                </div>
+              }
+              @case ('failed') {
+                <div class="result result-bad" role="status" data-testid="checkout-result">
+                  <span class="result-icon"><app-icon name="x" [size]="28" /></span>
+                  <h2>Pago no completado</h2>
+                  <p>Se agotaron los {{ v.max_attempts }} intentos permitidos para este pago.</p>
+                  @if (declineMessage(); as message) {
+                    <p class="muted small">Último motivo: {{ message }}</p>
+                  }
+                  @if (v.return_url) {
+                    <a class="btn btn-ghost" [href]="v.return_url">Volver al comercio</a>
+                  }
+                </div>
+              }
+              @case ('canceled') {
+                <div class="result result-bad" role="status" data-testid="checkout-result">
+                  <span class="result-icon"><app-icon name="x" [size]="28" /></span>
+                  <h2>Pago cancelado</h2>
+                  <p>El comercio canceló este pago. No se realizó ningún cobro.</p>
+                </div>
+              }
+              @case ('processing') {
+                <div class="result" role="status" data-testid="checkout-result">
+                  <h2>Procesando tu pago…</h2>
+                  <button type="button" class="btn btn-ghost" (click)="load()">Actualizar</button>
+                </div>
+              }
+              @case ('requires_action') {
+                @if (v.next_action; as action) {
+                  <app-challenge
+                    [action]="action"
+                    [amount]="v.amount"
+                    [merchant]="v.merchant.business_name"
+                    [busy]="submitting()"
+                    (decide)="authenticate($event)"
+                  />
+                }
+                <app-problem-alert [problem]="problem()" />
+              }
+              @case ('requires_payment_method') {
+                <h2 class="pay-title">Elige cómo pagar</h2>
+
+                @if (v.payment_method_types.length > 1) {
+                  <div class="methods" role="tablist" aria-label="Medio de pago">
+                    @for (type of v.payment_method_types; track type) {
+                      <button
+                        type="button"
+                        role="tab"
+                        class="method"
+                        [attr.aria-selected]="method() === type"
+                        (click)="selectMethod(type)"
+                      >
+                        <app-icon
+                          [name]="type === 'card' ? 'card' : type === 'pse' ? 'bank' : 'phone'"
+                          [size]="16"
+                        />
+                        {{ methodLabels[type] }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (declineMessage(); as message) {
+                  <div class="alert alert-error" role="alert" data-testid="decline">
+                    <strong>Pago rechazado.</strong> {{ message }}
+                    <span class="small">
+                      Te {{ attemptsLeft() === 1 ? 'queda' : 'quedan' }} {{ attemptsLeft() }}
+                      {{ attemptsLeft() === 1 ? 'intento' : 'intentos' }}.
+                    </span>
+                  </div>
+                }
+
+                <form class="stack" novalidate (submit)="$event.preventDefault(); pay()">
+                  @switch (method()) {
+                    @case ('card') {
+                      <div class="field">
+                        <label for="cc-number">Número de tarjeta</label>
+                        <div class="with-badge">
+                          <input
+                            id="cc-number"
+                            class="input mono"
+                            inputmode="numeric"
+                            autocomplete="cc-number"
+                            placeholder="1234 1234 1234 1234"
+                            [value]="pan()"
+                            (input)="onPanInput($event)"
+                            [attr.aria-invalid]="showErrors() && !!panErr()"
+                            aria-describedby="cc-number-error"
+                          />
+                          @if (brand()) {
+                            <span class="brand-badge" data-testid="card-brand">{{
+                              brandName()
+                            }}</span>
+                          }
+                        </div>
+                        @if (showErrors() && panErr(); as err) {
+                          <span id="cc-number-error" class="field-error">{{ err }}</span>
+                        }
+                      </div>
+                      <div class="grid-2">
+                        <div class="field">
+                          <label for="cc-exp">Vencimiento</label>
+                          <input
+                            id="cc-exp"
+                            class="input mono"
+                            inputmode="numeric"
+                            autocomplete="cc-exp"
+                            placeholder="MM/AA"
+                            [value]="expiry()"
+                            (input)="onExpiryInput($event)"
+                            [attr.aria-invalid]="showErrors() && !!expiryErr()"
+                          />
+                          @if (showErrors() && expiryErr(); as err) {
+                            <span class="field-error">{{ err }}</span>
+                          }
+                        </div>
+                        <div class="field">
+                          <label for="cc-cvc">CVC</label>
+                          <input
+                            id="cc-cvc"
+                            class="input mono"
+                            inputmode="numeric"
+                            autocomplete="cc-csc"
+                            [placeholder]="cvcDigits() === 4 ? '1234' : '123'"
+                            [value]="cvc()"
+                            (input)="onCvcInput($event)"
+                            [attr.aria-invalid]="showErrors() && !!cvcErr()"
+                          />
+                          @if (showErrors() && cvcErr(); as err) {
+                            <span class="field-error">{{ err }}</span>
+                          }
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label for="cc-name">Nombre en la tarjeta</label>
+                        <input
+                          id="cc-name"
+                          class="input"
+                          autocomplete="cc-name"
+                          [value]="cardName()"
+                          (input)="cardName.set($any($event.target).value)"
+                          [attr.aria-invalid]="showErrors() && !!nameErr()"
+                        />
+                        @if (showErrors() && nameErr(); as err) {
+                          <span class="field-error">{{ err }}</span>
+                        }
+                      </div>
+                    }
+                    @case ('pse') {
+                      <div class="field">
+                        <label for="pse-bank">Banco</label>
+                        <select
+                          id="pse-bank"
+                          class="input"
+                          [value]="pseBank()"
+                          (change)="pseBank.set($any($event.target).value)"
+                        >
+                          <option value="">Selecciona tu banco</option>
+                          @for (bank of banks; track bank.code) {
+                            <option [value]="bank.code">{{ bank.name }}</option>
+                          }
+                        </select>
+                        @if (showErrors() && pseErr(); as err) {
+                          <span class="field-error">{{ err }}</span>
+                        }
+                      </div>
+                      <fieldset class="field person">
+                        <legend class="label">Tipo de persona</legend>
+                        <label class="radio">
+                          <input
+                            type="radio"
+                            name="person"
+                            [checked]="psePersonType() === 'natural'"
+                            (change)="psePersonType.set('natural')"
+                          />
+                          Persona natural
+                        </label>
+                        <label class="radio">
+                          <input
+                            type="radio"
+                            name="person"
+                            [checked]="psePersonType() === 'juridica'"
+                            (change)="psePersonType.set('juridica')"
+                          />
+                          Persona jurídica
+                        </label>
+                      </fieldset>
+                      <p class="small muted">
+                        Serás dirigido al portal (simulado) de tu banco para aprobar el débito.
+                      </p>
+                    }
+                    @case ('nequi') {
+                      <div class="field">
+                        <label for="nequi-phone">Celular registrado en Nequi</label>
+                        <input
+                          id="nequi-phone"
+                          class="input mono"
+                          inputmode="numeric"
+                          autocomplete="tel-national"
+                          placeholder="300 123 4567"
+                          [value]="phone()"
+                          (input)="phone.set($any($event.target).value)"
+                        />
+                        @if (showErrors() && phoneErr(); as err) {
+                          <span class="field-error">{{ err }}</span>
+                        }
+                      </div>
+                      <p class="small muted">
+                        Te enviaremos una notificación (simulada) para que aceptes el pago.
+                      </p>
+                    }
+                  }
+
+                  <app-problem-alert [problem]="problem()" />
+
+                  <button
+                    type="submit"
+                    class="btn btn-primary btn-block btn-pay"
+                    [disabled]="submitting()"
+                    data-testid="pay"
+                  >
+                    {{ submitting() ? 'Procesando…' : 'Pagar ' + (v.amount | cop) }}
+                  </button>
+                </form>
+
+                @if (method() === 'card') {
+                  <details class="test-cards" data-testid="test-cards">
+                    <summary>Tarjetas de prueba</summary>
+                    <p class="small muted">
+                      Usa cualquier fecha futura y cualquier CVC. Otros números válidos se aprueban.
+                    </p>
+                    <ul>
+                      @for (card of testCards; track card.number) {
+                        <li>
+                          <span class="mono">{{ card.display }}</span>
+                          <span class="small muted">{{ card.label }}</span>
+                          <button
+                            type="button"
+                            class="btn btn-ghost btn-sm"
+                            [attr.aria-label]="'Usar tarjeta ' + card.label"
+                            (click)="useTestCard(card.number)"
+                          >
+                            Usar
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  </details>
+                }
+              }
+            }
+          </main>
+        </div>
+      }
+    }
+  }
+</div>

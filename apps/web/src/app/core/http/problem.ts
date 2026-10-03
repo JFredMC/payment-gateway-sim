@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { formatCop } from '../../shared/utils/money';
 import type { ProblemDetails } from '../api/api.models';
 
 /** An error ready to show in the UI (Spanish), derived from RFC 9457 problem+json. */
@@ -11,6 +12,15 @@ export interface AppProblem {
   requestId?: string;
 }
 
+const INVALID_CARD_REASONS: Record<string, string> = {
+  incomplete: 'El número de la tarjeta está incompleto.',
+  unknown_brand: 'No reconocemos la franquicia de esta tarjeta.',
+  invalid_length: 'El número no tiene la longitud correcta para esta franquicia.',
+  invalid_checksum: 'El número de la tarjeta no es válido.',
+  invalid_expiry: 'La tarjeta está vencida.',
+  invalid_cvc: 'El código de seguridad no es válido para esta tarjeta.',
+};
+
 const MESSAGES: Record<string, string | ((p: ProblemDetails) => string)> = {
   NETWORK_ERROR: 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
   VALIDATION_FAILED: 'Revisa los datos del formulario.',
@@ -21,6 +31,18 @@ const MESSAGES: Record<string, string | ((p: ProblemDetails) => string)> = {
   EMAIL_ALREADY_REGISTERED: 'Ya existe una cuenta con ese correo.',
   INVALID_API_KEY: 'La llave API no es válida o fue rotada.',
   NOT_FOUND: 'No encontramos lo que buscas.',
+  INVALID_CARD: (p) =>
+    INVALID_CARD_REASONS[String(p['reason'])] ?? 'Revisa los datos de la tarjeta.',
+  INVALID_PAYMENT_METHOD: 'El medio de pago no es válido. Ingrésalo de nuevo.',
+  INVALID_CLIENT_SECRET: 'El enlace de pago no es válido.',
+  PAYMENT_INTENT_UNEXPECTED_STATE: 'Este pago cambió de estado. Actualizamos la información.',
+  PAYMENT_METHOD_NOT_ALLOWED: 'Este comercio no acepta ese medio de pago.',
+  REFUND_EXCEEDS_AMOUNT: (p) =>
+    typeof p['refundable_amount'] === 'number'
+      ? `El reembolso supera el saldo disponible (${formatCop(p['refundable_amount'])}).`
+      : 'El reembolso supera el saldo disponible.',
+  IDEMPOTENCY_KEY_REUSED:
+    'Esta operación ya se envió con otros datos. Recarga e inténtalo de nuevo.',
   INVALID_CURSOR: 'No pudimos cargar más resultados. Recarga la página.',
   INTERNAL_ERROR: 'Ocurrió un error inesperado. Inténtalo de nuevo en unos segundos.',
 };

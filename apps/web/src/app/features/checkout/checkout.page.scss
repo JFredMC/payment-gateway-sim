@@ -1,0 +1,262 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--c-bg);
+}
+
+.checkout {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0 1.25rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+}
+
+.badge-test {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--c-warning-50);
+  color: var(--c-warning);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.summary {
+  display: grid;
+  gap: 0.35rem;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.summary h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.summary .muted {
+  color: rgb(255 255 255 / 80%);
+}
+
+.summary .description {
+  margin: 0;
+  opacity: 0.92;
+}
+
+.summary .amount-lg {
+  margin: 0.5rem 0;
+}
+
+.secure {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+  margin-top: 0.75rem;
+  opacity: 0.85;
+}
+
+.pay {
+  display: grid;
+  gap: 1rem;
+}
+
+.pay-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 0.5rem;
+}
+
+.method {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.method[aria-selected='true'] {
+  border-color: var(--c-primary);
+  background: var(--c-primary-50);
+  color: var(--c-primary-600);
+  box-shadow: 0 0 0 1px var(--c-primary);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.with-badge {
+  position: relative;
+}
+
+.with-badge .input {
+  padding-right: 7.5rem;
+}
+
+.brand-badge {
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.person {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+}
+
+.person legend {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+}
+
+.btn-pay {
+  padding-block: 0.8rem;
+  font-size: 1rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.test-cards {
+  border: 1px dashed var(--c-primary);
+  border-radius: var(--radius-sm);
+  background: var(--c-primary-50);
+  padding: 0.6rem 0.85rem;
+}
+
+.test-cards summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.test-cards ul {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.test-cards li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.result {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.result h2,
+.result p {
+  margin: 0;
+}
+
+.result-icon {
+  display: inline-flex;
+  padding: 0.75rem;
+  border-radius: 999px;
+}
+
+.result-ok .result-icon {
+  background: var(--c-success-50);
+  color: var(--c-success);
+}
+
+.result-bad .result-icon {
+  background: var(--c-danger-50);
+  color: var(--c-danger);
+}
+
+.notice {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  max-width: 480px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.notice h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summary .secure {
+    display: none;
+  }
+
+  .test-cards li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .test-cards li .muted {
+    grid-column: 1;
+  }
+
+  .test-cards li .btn {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+}
