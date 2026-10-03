@@ -20,6 +20,7 @@ import {
 } from '../../domain/payment-intent-state';
 import { DECLINES, type DeclineCode, TEST_CARDS } from '../../domain/test-cards';
 import { CopPipe } from '../../shared/pipes/cop.pipe';
+import { DemoBannerComponent } from '../../shared/ui/demo-banner.component';
 import { IconComponent } from '../../shared/ui/icon.component';
 import { ProblemAlertComponent } from '../../shared/ui/problem-alert.component';
 import { IdempotencyKeyTracker } from '../../shared/utils/idempotency-key';
@@ -45,7 +46,7 @@ type LoadState = 'loading' | 'ready' | 'invalid' | 'error';
  */
 @Component({
   selector: 'app-checkout-page',
-  imports: [CopPipe, IconComponent, ProblemAlertComponent, ChallengeComponent],
+  imports: [CopPipe, IconComponent, ProblemAlertComponent, ChallengeComponent, DemoBannerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './checkout.page.html',
   styleUrl: './checkout.page.scss',

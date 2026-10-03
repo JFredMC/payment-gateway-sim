@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import type { WebhookDelivery, WebhookEndpoint } from '../../core/api/api.models';
+import { DEMO_MODE } from '../../core/demo/demo-mode';
 import { DashboardApi } from '../../core/api/dashboard-api.service';
 import { type AppProblem, toProblem } from '../../core/http/problem';
 import { EVENT_LABELS_ES, EVENT_TYPES, type EventType } from '../../domain/events';
@@ -59,6 +60,8 @@ const DELIVERY_FILTERS: { value: WebhookDeliveryStatus | null; label: string }[]
 export class WebhooksPage {
   private readonly api = inject(DashboardApi);
   private readonly router = inject(Router);
+  /** Demo build: explains the simulated receiver. */
+  protected readonly demo = inject(DEMO_MODE);
 
   /** Deep link to one delivery (`?entrega=`). */
   readonly entrega = input<string>();

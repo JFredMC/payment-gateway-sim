@@ -11,6 +11,17 @@
     }
   </header>
 
+  @if (demo) {
+    <p class="alert alert-info small" data-testid="webhooks-demo-note">
+      En la demo las entregas se firman de verdad (HMAC-SHA256 con Web Crypto), pero el receptor se
+      simula en el navegador: responde 200 tras verificar la firma; las URLs con
+      <span class="code-inline">falla</span> responden 500, las que contienen
+      <span class="code-inline">timeout</span> agotan el tiempo y los dominios
+      <span class="code-inline">.invalid</span> no conectan. Los reintentos siguen el backoff real
+      mientras usas la app.
+    </p>
+  }
+
   @if (showForm()) {
     <section class="card" aria-labelledby="new-endpoint-title">
       <h2 id="new-endpoint-title" class="card-title">Nuevo endpoint</h2>
