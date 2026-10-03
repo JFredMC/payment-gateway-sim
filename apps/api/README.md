@@ -24,3 +24,7 @@ NestJS 11 + TypeORM + PostgreSQL. Global prefix: `/api/v1`. Swagger UI at `/api/
 - `src/modules/users/` + `src/modules/auth/`: dashboard sign-up/login/refresh/logout/me, argon2id passwords, JWT access tokens (with the merchant id) and rotating refresh tokens with reuse detection.
 - `src/modules/merchants/`: merchants (created at sign-up) and `GET /account` (secret key).
 - `src/modules/api-keys/`: `pk_test_`/`sk_test_` keys (SHA-256 at rest, secret shown once on roll), `ApiKeyGuard` + `@ApiKeyAuth()` for merchant-API routes, `GET /dashboard/api-keys`, `POST /dashboard/api-keys/roll` ([ADR 0002](../../docs/adr/0002-autenticacion-panel-y-llaves-api.md)).
+- `src/domain/`: pure-TypeScript domain shared with the web app (cards/Luhn/brands, test cards, PSE/Nequi, state machine, events). Copied to `apps/web/src/app/domain/` with `pnpm sync:domain`; CI runs `pnpm check:domain` ([ADR 0003](../../docs/adr/0003-dominio-compartido-api-web.md)).
+- `src/modules/idempotency/`: `Idempotency-Key` storage scoped by merchant (replay with `Idempotent-Replayed: true`, `422` on reuse with a different body).
+- `src/modules/events/`: append-only `evt_` log written in the same transaction as each state change, plus a subscriber hook used by webhooks.
+- `src/modules/payments/`: payment methods (tokenization; the PAN is never stored), payment intents (`/payment_intents`, confirm, cancel), refunds (`/refunds`) and the public hosted-checkout endpoints (`/checkout/:id`, authorized by `client_secret`) ([ADR 0004](../../docs/adr/0004-payment-intents-tarjetas-e-idempotencia.md)).
