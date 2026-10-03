@@ -40,6 +40,9 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Shared domain in sync (api ↔ web)
+        run: pnpm check:domain
+
       - name: Lint
         run: pnpm lint
 
@@ -129,6 +132,28 @@ jobs:
             -d '{"type":"secret"}' | jq -er .secret)
           curl -fsS http://localhost:4200/api/v1/account -H "Authorization: Bearer $SK" \
             | jq -e '.object == "account" and .livemode == false'
+          # Payment flow: create intent (sk) -> tokenize 4242 (pk) -> hosted checkout confirm -> refund.
+          PK=$(curl -fsS http://localhost:4200/api/v1/dashboard/api-keys -H "Authorization: Bearer $TOKEN" \
+            | jq -er '.[] | select(.type == "publishable") | .token')
+          PI=$(curl -fsS -X POST http://localhost:4200/api/v1/payment_intents \
+            -H "Authorization: Bearer $SK" -H "Idempotency-Key: smoke-pi-1" -H 'Content-Type: application/json' \
+            -d '{"amount":5000000,"description":"Pedido smoke"}')
+          PI_ID=$(echo "$PI" | jq -er .id)
+          CS=$(echo "$PI" | jq -er .client_secret)
+          PM=$(curl -fsS -X POST http://localhost:4200/api/v1/payment_methods \
+            -H "Authorization: Bearer $PK" -H 'Content-Type: application/json' \
+            -d '{"type":"card","card":{"number":"4242 4242 4242 4242","exp_month":12,"exp_year":2035,"cvc":"123"}}' \
+            | jq -er .id)
+          curl -fsS -X POST "http://localhost:4200/api/v1/checkout/$PI_ID/confirm" \
+            -H "Idempotency-Key: smoke-confirm-1" -H 'Content-Type: application/json' \
+            -d "{\"client_secret\":\"$CS\",\"payment_method\":\"$PM\"}" \
+            | jq -e '.status == "succeeded"'
+          curl -fsS -X POST http://localhost:4200/api/v1/refunds \
+            -H "Authorization: Bearer $SK" -H "Idempotency-Key: smoke-refund-1" -H 'Content-Type: application/json' \
+            -d "{\"payment_intent\":\"$PI_ID\",\"amount\":1000000}" \
+            | jq -e '.status == "succeeded" and .amount == 1000000'
+          curl -fsS "http://localhost:4200/api/v1/payment_intents/$PI_ID" -H "Authorization: Bearer $SK" \
+            | jq -e '.amount_refunded == 1000000 and .refund_status == "partial"'
 
       - name: Logs on failure
         if: failure()

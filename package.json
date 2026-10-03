@@ -22,7 +22,9 @@
     "test": "pnpm -r run test",
     "test:e2e": "pnpm --filter api run test:e2e",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:domain": "node scripts/domain-sync.mjs",
+    "sync:domain": "node scripts/domain-sync.mjs --write"
   },
   "devDependencies": {
     "prettier": "^3.8.1"
