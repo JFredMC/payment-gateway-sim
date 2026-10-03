@@ -39,6 +39,15 @@ describe('Health (e2e)', () => {
         '/api/v1/account',
         '/api/v1/dashboard/api-keys',
         '/api/v1/dashboard/api-keys/roll',
+        '/api/v1/payment_intents',
+        '/api/v1/payment_intents/{id}',
+        '/api/v1/payment_intents/{id}/confirm',
+        '/api/v1/payment_intents/{id}/cancel',
+        '/api/v1/payment_methods',
+        '/api/v1/refunds',
+        '/api/v1/checkout/{id}',
+        '/api/v1/checkout/{id}/confirm',
+        '/api/v1/checkout/{id}/authenticate',
       ]),
     );
     expect(Object.keys(res.body.components.securitySchemes)).toEqual(
