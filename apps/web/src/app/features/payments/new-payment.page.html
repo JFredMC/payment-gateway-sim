@@ -1,0 +1,93 @@
+<div class="page page-narrow stack">
+  <a routerLink="/pagos" class="small back"><app-icon name="arrow-left" [size]="14" /> Pagos</a>
+
+  @if (created(); as pi) {
+    <section class="card stack" data-testid="payment-created" aria-live="polite">
+      <div class="row">
+        <span class="badge badge-success"><app-icon name="check" [size]="14" /> Pago creado</span>
+        <span class="spacer"></span>
+        <strong class="amount-lg">{{ pi.amount | cop }}</strong>
+      </div>
+      <p class="muted">
+        Comparte este enlace con el comprador o ábrelo tú mismo para probar el checkout con las
+        tarjetas de prueba.
+      </p>
+      <div class="field">
+        <label for="checkout-link">Enlace de pago</label>
+        <input id="checkout-link" class="input mono" readonly [value]="link()" />
+      </div>
+      <div class="row">
+        <a
+          class="btn btn-primary"
+          [href]="link()"
+          target="_blank"
+          rel="noopener"
+          data-testid="open-checkout"
+        >
+          <app-icon name="external" [size]="16" /> Abrir checkout
+        </a>
+        <app-copy-button [value]="link()" text="Copiar enlace" label="Copiar enlace de pago" />
+        <a class="btn btn-ghost" [routerLink]="['/pagos', pi.id]">Ver detalle</a>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="another()">
+        Crear otro pago
+      </button>
+    </section>
+  } @else {
+    <header class="page-header">
+      <h1>Crear pago de prueba</h1>
+      <p class="muted">Genera un payment intent y su enlace de checkout. Ningún cobro es real.</p>
+    </header>
+
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="amount">Monto (COP)</label>
+        <input
+          id="amount"
+          class="input input-money"
+          inputmode="decimal"
+          placeholder="45.000"
+          formControlName="amount"
+          aria-describedby="amount-hint"
+        />
+        <span id="amount-hint" class="hint">Entre {{ minLabel }} y {{ maxLabel }}.</span>
+        @if (amountError(); as err) {
+          <span class="field-error">{{ err }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="description">Descripción</label>
+        <input
+          id="description"
+          class="input"
+          formControlName="description"
+          placeholder="Pedido #1001"
+        />
+      </div>
+      <div class="field">
+        <label for="customer-email">Correo del comprador (opcional)</label>
+        <input id="customer-email" class="input" type="email" formControlName="customerEmail" />
+        @if (form.controls.customerEmail.touched && form.controls.customerEmail.invalid) {
+          <span class="field-error">Ingresa un correo válido.</span>
+        }
+      </div>
+      <fieldset class="field methods">
+        <legend class="label">Medios de pago aceptados</legend>
+        @for (type of methodTypes; track type) {
+          <label class="check">
+            <input type="checkbox" [formControlName]="type" /> {{ methodLabels[type] }}
+          </label>
+        }
+        @if (methodsError()) {
+          <span class="field-error">Elige al menos un medio de pago.</span>
+        }
+      </fieldset>
+
+      <app-problem-alert [problem]="problem()" />
+
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="submitting()">
+        {{ submitting() ? 'Creando…' : 'Crear pago' }}
+      </button>
+    </form>
+  }
+</div>

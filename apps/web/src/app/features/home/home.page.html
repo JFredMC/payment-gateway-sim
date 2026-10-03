@@ -1,0 +1,152 @@
+<div class="page stack">
+  <header class="page-header row">
+    <div class="spacer">
+      <h1>Hola, {{ auth.firstName() }}</h1>
+      <p class="muted">
+        Resumen de
+        <strong data-testid="business-name">{{ auth.user()?.merchant?.business_name }}</strong> ·
+        modo test
+      </p>
+    </div>
+    <a routerLink="/pagos/nuevo" class="btn btn-primary">
+      <app-icon name="plus" [size]="18" /> Crear pago
+    </a>
+  </header>
+
+  <app-problem-alert [problem]="problem()" [showRetry]="true" (retry)="load()" />
+
+  <section aria-labelledby="kpi-title">
+    <div class="section-head">
+      <h2 id="kpi-title">Indicadores</h2>
+      <div class="row" role="group" aria-label="Periodo">
+        <button type="button" class="chip" [attr.aria-pressed]="days() === 7" (click)="setDays(7)">
+          7 días
+        </button>
+        <button
+          type="button"
+          class="chip"
+          [attr.aria-pressed]="days() === 30"
+          (click)="setDays(30)"
+        >
+          30 días
+        </button>
+      </div>
+    </div>
+
+    @if (summary(); as s) {
+      <div class="kpis">
+        <article class="card kpi" data-testid="kpi-gross">
+          <p class="kpi-label">Volumen bruto</p>
+          <p class="kpi-value">{{ s.gross_volume | cop }}</p>
+          <p class="kpi-foot">
+            {{ s.succeeded_count }}
+            {{ s.succeeded_count === 1 ? 'pago exitoso' : 'pagos exitosos' }}
+          </p>
+        </article>
+        <article class="card kpi" data-testid="kpi-net">
+          <p class="kpi-label">Volumen neto</p>
+          <p class="kpi-value">{{ s.net_volume | cop }}</p>
+          <p class="kpi-foot">Reembolsado: {{ s.refunded_amount | cop }}</p>
+        </article>
+        <article class="card kpi" data-testid="kpi-approval">
+          <p class="kpi-label">Tasa de aprobación</p>
+          <p class="kpi-value">{{ approval() }}</p>
+          <p class="kpi-foot">
+            {{ s.failed_attempts }}
+            {{ s.failed_attempts === 1 ? 'intento rechazado' : 'intentos rechazados' }}
+          </p>
+        </article>
+        <article class="card kpi" data-testid="kpi-ticket">
+          <p class="kpi-label">Ticket promedio</p>
+          <p class="kpi-value">{{ s.average_ticket | cop }}</p>
+          <p class="kpi-foot">
+            {{ s.pending_count }}
+            {{ s.pending_count === 1 ? 'pago pendiente' : 'pagos pendientes' }}
+          </p>
+        </article>
+      </div>
+
+      <div class="charts">
+        <article class="card">
+          <h3 class="card-title">Volumen diario (COP)</h3>
+          <div
+            class="chart"
+            role="img"
+            [attr.aria-label]="'Volumen diario de los últimos ' + s.period.days + ' días'"
+          >
+            @for (bar of bars(); track bar.date) {
+              <div class="bar-col" [title]="bar.title">
+                <div class="bar-track">
+                  <div class="bar" [style.height.%]="bar.height"></div>
+                </div>
+                <span class="bar-label">{{ bar.showLabel ? bar.label : '' }}</span>
+              </div>
+            }
+          </div>
+          <p class="small muted">Días calendario de Colombia (America/Bogota).</p>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Por medio de pago</h3>
+          @if (methodShare().length === 0) {
+            <p class="muted small">Aún no hay pagos exitosos en este periodo.</p>
+          } @else {
+            <ul class="list-plain methods">
+              @for (m of methodShare(); track m.type) {
+                <li>
+                  <div class="row">
+                    <span class="spacer">{{ methodLabels[m.type] }}</span>
+                    <strong>{{ m.volume | cop }}</strong>
+                  </div>
+                  <div class="share"><div [style.width.%]="m.share"></div></div>
+                  <span class="small muted"
+                    >{{ m.count }} {{ m.count === 1 ? 'pago' : 'pagos' }} · {{ m.share }} %</span
+                  >
+                </li>
+              }
+            </ul>
+          }
+        </article>
+      </div>
+    } @else if (!problem()) {
+      <div class="kpis" aria-busy="true">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="card skeleton" style="height: 6.5rem"></div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="recent-title">
+    <div class="section-head">
+      <h2 id="recent-title">Pagos recientes</h2>
+      <a routerLink="/pagos" class="small">Ver todos</a>
+    </div>
+    @if (recent(); as list) {
+      @if (list.length === 0) {
+        <div class="empty">
+          <p>Todavía no tienes pagos.</p>
+          <a routerLink="/pagos/nuevo" class="btn btn-ghost btn-sm">Crear un pago de prueba</a>
+        </div>
+      } @else {
+        <ul class="list-plain recent" data-testid="recent-payments">
+          @for (p of list; track p.id) {
+            <li>
+              <a [routerLink]="['/pagos', p.id]" class="recent-row">
+                <span class="recent-main">
+                  <strong>{{ p.amount | cop }}</strong>
+                  <span class="small muted">{{ p.description || 'Sin descripción' }}</span>
+                </span>
+                <span class="recent-side">
+                  <app-badge [tone]="statusTones[p.status]">{{ statusLabels[p.status] }}</app-badge>
+                  <span class="small muted">{{ p.created_at | dateTime }}</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <div class="skeleton" style="height: 10rem"></div>
+    }
+  </section>
+</div>
