@@ -13,6 +13,8 @@ import { AuthService } from '../auth/auth.service';
 const RETRIED_AFTER_REFRESH = new HttpContextToken<boolean>(() => false);
 
 const SESSION_ENDPOINTS = /\/auth\/(login|register|refresh|logout)$/;
+/** Buyer-facing endpoints authorized by a client secret, never by the dashboard session. */
+const CHECKOUT_ENDPOINTS = /\/checkout\//;
 
 const withBearer = (req: HttpRequest<unknown>, token: string) =>
   req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
@@ -29,6 +31,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (
     !req.url.startsWith(API_BASE) ||
     SESSION_ENDPOINTS.test(req.url) ||
+    CHECKOUT_ENDPOINTS.test(req.url) ||
     req.headers.has('Authorization')
   ) {
     return next(req);

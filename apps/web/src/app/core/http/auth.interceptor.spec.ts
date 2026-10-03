@@ -59,6 +59,13 @@ describe('authInterceptor', () => {
     backend.expectNone('/api/v1/auth/refresh');
   });
 
+  it('never sends the dashboard token to the public checkout endpoints', () => {
+    http.get('/api/v1/checkout/pi_1?client_secret=s').subscribe();
+    const req = backend.expectOne('/api/v1/checkout/pi_1?client_secret=s');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
   it('on 401 refreshes once and replays the request with the same Idempotency-Key', async () => {
     const headers = new HttpHeaders({ 'Idempotency-Key': 'key-123' });
     const result = firstValueFrom(
