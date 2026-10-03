@@ -1,17 +1,17 @@
 import { DomainError } from '../errors/domain-error';
 
 /**
- * Keyset position in a list ordered by (created_at DESC, id DESC).
- * `createdAt` keeps PostgreSQL's microsecond precision (a JS Date would
- * truncate it to milliseconds and skip or repeat rows).
+ * Keyset position in a list ordered by (created_at DESC, id DESC). Listed tables
+ * store `created_at` with millisecond precision, so an ISO string round-trips it.
  */
 export interface KeysetCursor {
   createdAt: string;
   id: string;
 }
 
-const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
-const BIGINT_ID = /^\d{1,19}$/;
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+/** Public object id (`pi_…`, `evt_…`). */
+const PUBLIC_ID = /^[a-z]{2,5}_[0-9A-Za-z]{24}$/;
 
 /** Opaque, URL-safe cursor. Clients must not build or parse it. */
 export function encodeCursor(cursor: KeysetCursor): string {
@@ -27,7 +27,7 @@ export function decodeCursor(value: string): KeysetCursor {
       typeof decoded[0] === 'string' &&
       typeof decoded[1] === 'string' &&
       TIMESTAMP.test(decoded[0]) &&
-      BIGINT_ID.test(decoded[1])
+      PUBLIC_ID.test(decoded[1])
     ) {
       return { createdAt: decoded[0], id: decoded[1] };
     }

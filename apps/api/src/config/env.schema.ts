@@ -62,6 +62,10 @@ export const envSchema = databaseSchema.extend({
   COOKIE_SECURE: booleanFromString('true'),
   AUTH_MAX_FAILED_LOGINS: z.coerce.number().int().min(1).max(100).default(5),
   AUTH_LOCK_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+
+  // --- Idempotency ---
+  /** How long a stored Idempotency-Key response can be replayed. */
+  IDEMPOTENCY_KEY_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(24),
 });
 
 export type Env = z.infer<typeof envSchema>;

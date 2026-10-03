@@ -31,3 +31,12 @@ export function fromJsonAmount(value: number): bigint {
   }
   return BigInt(value);
 }
+
+/**
+ * BIGINT column ⇄ JS number. Safe because amounts are capped far below
+ * Number.MAX_SAFE_INTEGER by validation (see domain MAX_AMOUNT).
+ */
+export const bigintNumberTransformer: ValueTransformer = {
+  to: (value: number | null | undefined) => value,
+  from: (value: string | null) => (value == null ? value : Number(value)),
+};
