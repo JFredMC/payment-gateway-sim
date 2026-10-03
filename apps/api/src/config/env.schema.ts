@@ -66,6 +66,16 @@ export const envSchema = databaseSchema.extend({
   // --- Idempotency ---
   /** How long a stored Idempotency-Key response can be replayed. */
   IDEMPOTENCY_KEY_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(24),
+
+  // --- Webhooks ---
+  /** Run the delivery worker in this process (disable it to run it elsewhere, or in tests). */
+  WEBHOOK_WORKER_ENABLED: booleanFromString('true'),
+  WEBHOOK_POLL_INTERVAL_MS: z.coerce.number().int().min(100).max(60_000).default(1000),
+  /** First retry delay; later ones grow x5 (10 s, 50 s, ~4 min, ~21 min, ~1.7 h). */
+  WEBHOOK_RETRY_BASE_SECONDS: z.coerce.number().min(0).max(3600).default(10),
+  WEBHOOK_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(5000),
+  /** Allows http:// and private/loopback targets (local development only: SSRF risk). */
+  WEBHOOK_ALLOW_INSECURE_URLS: booleanFromString('false'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -26,6 +26,12 @@ export const ERROR_CATALOG = {
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     title: 'Idempotency-Key reused with a different request',
   },
+  /** Webhook endpoint URL rejected (`reason`: invalid_url, https_required, credentials_in_url). */
+  INVALID_WEBHOOK_URL: { status: HttpStatus.BAD_REQUEST, title: 'Invalid webhook URL' },
+  WEBHOOK_ENDPOINT_LIMIT: {
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    title: 'Webhook endpoint limit reached',
+  },
   /** Card data rejected at tokenization (Luhn, brand, length, expiry, CVC). */
   INVALID_CARD: { status: HttpStatus.BAD_REQUEST, title: 'Invalid card details' },
   INVALID_PAYMENT_METHOD: { status: HttpStatus.BAD_REQUEST, title: 'Invalid payment method' },
