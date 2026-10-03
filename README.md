@@ -197,6 +197,37 @@ function verify(rawBody, header, secret, toleranceSeconds = 300) {
   `http://localhost` solo para desarrollo.
 - Detalles en el [ADR 0006](docs/adr/0006-webhooks-firmados.md).
 
+## Panel del comercio
+
+| Sección        | Qué permite                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Inicio**     | KPIs en COP (volumen bruto y neto, tasa de aprobación, ticket promedio) de 7 o 30 días, volumen diario, medios de pago y pagos recientes. |
+| **Pagos**      | Lista filtrable por estado (`?estado=succeeded`), creación de pagos de prueba con enlace de checkout listo para compartir.                |
+| **Detalle**    | Estado, medio de pago (solo marca y últimos 4), línea de tiempo de eventos, reembolsos totales o parciales, cancelación y webhooks.       |
+| **Claves API** | Llave publicable, llave secreta enmascarada y rotación (la nueva se muestra una sola vez).                                                |
+| **Webhooks**   | Endpoints (crear, habilitar, rotar secreto, eliminar) y registro de entregas con intentos, respuesta, payload y reenvío manual.           |
+
+```mermaid
+flowchart LR
+  subgraph Navegador
+    P[Panel Angular] -->|JWT + Idempotency-Key| D
+    C[Checkout alojado] -->|pk_test + client_secret| K
+  end
+  subgraph API NestJS
+    D["/dashboard/*"] --> S[Servicios de dominio]
+    K["/checkout/*"] --> S
+    A["/payment_intents · /refunds<br/>(sk_test)"] --> S
+    S --> E[(eventos + outbox)]
+    E --> W[Worker de webhooks]
+  end
+  S --> DB[(PostgreSQL)]
+  W -->|HMAC-SHA256| M[Servidor del comercio]
+```
+
+Los KPIs se calculan en PostgreSQL por día calendario de Colombia (America/Bogota); la
+tasa de aprobación cuenta cada intento rechazado. Ver el
+[ADR 0007](docs/adr/0007-panel-del-comercio.md).
+
 ## Decisiones de arquitectura
 
 Ver [docs/adr](docs/adr/README.md).
