@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { DemoBannerComponent } from '../../shared/ui/demo-banner.component';
 import { IconComponent, type IconName } from '../../shared/ui/icon.component';
 import { AuthService } from '../auth/auth.service';
 
@@ -19,7 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
 /** Merchant dashboard layout: top bar on desktop, bottom tab bar on mobile. */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IconComponent, DemoBannerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',

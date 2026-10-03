@@ -13,3 +13,4 @@ reescriben: si una decisión cambia, un ADR nuevo enlaza al que reemplaza.
 | [0005](0005-checkout-alojado.md)                        | Checkout alojado: enlace con client secret y desafíos simulados   | Aceptado |
 | [0006](0006-webhooks-firmados.md)                       | Webhooks: outbox transaccional, firma HMAC y reintentos           | Aceptado |
 | [0007](0007-panel-del-comercio.md)                      | Panel del comercio: endpoints propios y KPIs calculados en SQL    | Aceptado |
+| [0008](0008-modo-demo-github-pages.md)                  | Modo demo en GitHub Pages con backend simulado en el navegador    | Aceptado |

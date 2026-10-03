@@ -9,6 +9,7 @@
 </section>
 
 <section class="panel">
+  <app-demo-banner class="form-width" [compact]="true" />
   <div class="card form-card">
     <div class="brand-mobile">
       <span class="brand-mark"><app-icon name="card" [size]="18" /></span>Pasarela
@@ -16,6 +17,9 @@
     <h1>Ingresar</h1>
     <p class="muted">Bienvenido de nuevo.</p>
 
+    @if (demoReset()) {
+      <p class="alert alert-info" role="status">Listo: la demo volvió a sus datos iniciales.</p>
+    }
     @if (sesion() === 'expirada') {
       <p class="alert alert-info" role="status">Tu sesión expiró. Ingresa de nuevo.</p>
     }
@@ -52,5 +56,31 @@
     <p class="small muted">
       ¿Aún no tienes comercio? <a routerLink="/registro">Regístralo gratis</a>
     </p>
+
+    @if (demoMode; as demo) {
+      <section class="demo-hint small" data-testid="demo-hint" aria-labelledby="demo-hint-title">
+        <h2 id="demo-hint-title">Comercio de prueba</h2>
+        <p class="muted">
+          Ingresa con el comercio de ejemplo (con pagos, reembolsos y webhooks ya cargados) o
+          registra uno nuevo.
+        </p>
+        <ul>
+          @for (account of demo.credentials; track account.email) {
+            <li>
+              <span
+                ><strong>{{ account.fullName }}</strong
+                ><br /><span class="mono muted">{{ account.email }}</span
+                ><br /><span class="muted"
+                  >Contraseña: <strong class="mono">{{ account.password }}</strong></span
+                ></span
+              >
+              <button type="button" class="btn btn-ghost btn-sm" (click)="useDemo(account)">
+                Usar
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
   </div>
 </section>
