@@ -1,0 +1,74 @@
+import { z } from 'zod';
+
+const booleanFromString = (defaultValue: 'true' | 'false') =>
+  z
+    .enum(['true', 'false'])
+    .default(defaultValue)
+    .transform((value) => value === 'true');
+
+const DURATION_UNITS_IN_SECONDS = { s: 1, m: 60, h: 3600, d: 86400 } as const;
+
+/** Parses "900", "30s", "15m", "1h" or "7d" into seconds. */
+export function durationToSeconds(value: string): number {
+  const match = /^(\d+)([smhd])?$/.exec(value.trim());
+  if (!match) {
+    throw new Error(`Invalid duration "${value}"`);
+  }
+  const unit = (match[2] ?? 's') as keyof typeof DURATION_UNITS_IN_SECONDS;
+  return Number(match[1]) * DURATION_UNITS_IN_SECONDS[unit];
+}
+
+const databaseSchema = z.object({
+  DATABASE_URL: z
+    .string({ error: 'DATABASE_URL is required' })
+    .regex(/^postgres(ql)?:\/\//, 'DATABASE_URL must be a postgres:// connection string'),
+  DATABASE_SSL: booleanFromString('false'),
+  DATABASE_MIGRATIONS_RUN: booleanFromString('false'),
+});
+
+/**
+ * Environment contract for the API. The app refuses to boot when the
+ * environment does not satisfy this schema ("fail fast").
+ */
+export const envSchema = databaseSchema.extend({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:4200')
+    .transform((value) =>
+      value
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    ),
+  TRUST_PROXY: booleanFromString('false'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  SWAGGER_ENABLED: booleanFromString('true'),
+});
+
+export type Env = z.infer<typeof envSchema>;
+export type DatabaseEnv = z.infer<typeof databaseSchema>;
+
+function formatIssues(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
+    .join('\n');
+}
+
+export function validateEnv(config: Record<string, unknown>): Env {
+  const result = envSchema.safeParse(config);
+  if (!result.success) {
+    throw new Error(`Invalid environment configuration:\n${formatIssues(result.error)}`);
+  }
+  return result.data;
+}
+
+/** Subset used by the TypeORM CLI, which only needs database settings. */
+export function validateDatabaseEnv(config: Record<string, unknown>): DatabaseEnv {
+  const result = databaseSchema.safeParse(config);
+  if (!result.success) {
+    throw new Error(`Invalid database configuration:\n${formatIssues(result.error)}`);
+  }
+  return result.data;
+}
