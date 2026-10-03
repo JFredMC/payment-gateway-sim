@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+
+# pnpm 10 blocks dependency lifecycle scripts by default; allow only what is needed.
+onlyBuiltDependencies:
+  - esbuild
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - '@scarf/scarf'
+  - argon2 # ships N-API prebuilds (glibc + musl); no compile step needed
+  - '@parcel/watcher'
+  - lmdb
+  - msgpackr-extract
+  - unrs-resolver
