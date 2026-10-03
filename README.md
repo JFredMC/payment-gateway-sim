@@ -114,6 +114,39 @@ Cualquier otro número válido (Luhn) se aprueba. También hay **PSE** (bancos f
 "… de Prueba", con aprobación o rechazo en una página bancaria simulada) y **Nequi**
 (notificación simulada al celular).
 
+### Checkout alojado
+
+El comercio comparte el enlace `/checkout/{id}?secret={client_secret}`. El checkout:
+
+- valida la tarjeta mientras se escribe (marca, Luhn, vencimiento, CVC);
+- la tokeniza con la llave publicable;
+- confirma con `Idempotency-Key`;
+- resuelve en la misma página el desafío 3DS, el portal PSE o la aprobación en Nequi
+  (todos simulados).
+
+Los rechazos se explican en español con los intentos restantes. El panel "Tarjetas de
+prueba" llena el formulario con un clic
+([ADR 0005](docs/adr/0005-checkout-alojado.md)).
+
+```mermaid
+sequenceDiagram
+    participant S as Servidor del comercio
+    participant A as API Pasarela
+    participant C as Checkout (navegador)
+    S->>A: POST /payment_intents (sk_test_…)
+    A-->>S: pi_… + client_secret
+    S-->>C: enlace /checkout/pi_…?secret=…
+    C->>A: GET /checkout/pi_… (client_secret)
+    C->>A: POST /payment_methods (pk_test_…, número de tarjeta)
+    A-->>C: pm_… (solo marca y last4)
+    C->>A: POST /checkout/pi_…/confirm (Idempotency-Key)
+    alt requiere 3DS / PSE / Nequi
+        A-->>C: requires_action + next_action
+        C->>A: POST /checkout/pi_…/authenticate (approve | reject)
+    end
+    A-->>C: succeeded · o rechazo con last_payment_error
+```
+
 ## Decisiones de arquitectura
 
 Ver [docs/adr](docs/adr/README.md).
