@@ -1,10 +1,15 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { validateEnv } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
+import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { MerchantsModule } from './modules/merchants/merchants.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -17,6 +22,10 @@ import { HealthModule } from './modules/health/health.module';
     }),
     DatabaseModule,
     HealthModule,
+    UsersModule,
+    MerchantsModule,
+    ApiKeysModule,
+    AuthModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
@@ -28,6 +37,9 @@ import { HealthModule } from './modules/health/health.module';
         transform: true,
       }),
     },
+    // Dashboard routes need a bearer JWT unless marked @Public(); the merchant API
+    // routes are @Public() for this guard and use ApiKeyGuard instead.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule {}
