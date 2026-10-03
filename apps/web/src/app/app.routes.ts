@@ -21,6 +21,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/status/status.page').then((m) => m.StatusPage),
   },
   {
+    // Public hosted checkout: authorized by the intent's client secret (?secret=…).
+    path: 'checkout/:id',
+    title: 'Pagar · Pasarela',
+    loadComponent: () => import('./features/checkout/checkout.page').then((m) => m.CheckoutPage),
+  },
+  {
     path: '',
     component: ShellComponent,
     canActivate: [authGuard],

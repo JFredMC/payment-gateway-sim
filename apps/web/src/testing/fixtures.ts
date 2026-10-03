@@ -1,5 +1,5 @@
 import type { ComponentFixture } from '@angular/core/testing';
-import type { AuthResponse, ProblemDetails, User } from '../app/core/api/api.models';
+import type { AuthResponse, CheckoutView, ProblemDetails, User } from '../app/core/api/api.models';
 
 /** Test-only fixtures and DOM helpers (excluded from the app build). */
 
@@ -63,4 +63,27 @@ export function buttonByText(fixture: ComponentFixture<unknown>, text: string): 
 /** "$ 25.000" with a non-breaking space → plain spaces, for readable assertions. */
 export function text(node: Element | null): string {
   return (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
+export function checkoutView(overrides: Partial<CheckoutView> = {}): CheckoutView {
+  return {
+    object: 'checkout',
+    id: 'pi_test123',
+    amount: 8_990_000,
+    amount_refunded: 0,
+    currency: 'COP',
+    description: 'Audífonos inalámbricos',
+    status: 'requires_payment_method',
+    merchant: { business_name: 'Tienda Aurora' },
+    publishable_key: 'pk_test_abc',
+    payment_method_types: ['card', 'pse', 'nequi'],
+    payment_method: null,
+    next_action: null,
+    last_payment_error: null,
+    attempts: 0,
+    max_attempts: 3,
+    return_url: null,
+    created_at: '2026-10-02T15:00:00.000Z',
+    ...overrides,
+  };
 }
