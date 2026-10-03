@@ -45,6 +45,23 @@ export const envSchema = databaseSchema.extend({
   TRUST_PROXY: booleanFromString('false'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   SWAGGER_ENABLED: booleanFromString('true'),
+
+  // --- Dashboard auth ---
+  JWT_ACCESS_SECRET: z
+    .string({ error: 'JWT_ACCESS_SECRET is required' })
+    .min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  /** Access-token lifetime, exposed to the app in seconds. */
+  JWT_ACCESS_TTL: z
+    .string()
+    .regex(/^\d+[smhd]?$/, 'JWT_ACCESS_TTL must look like 900, 30s, 15m, 1h or 1d')
+    .default('15m')
+    .transform(durationToSeconds),
+  JWT_ISSUER: z.string().min(1).default('payment-gateway-sim'),
+  JWT_AUDIENCE: z.string().min(1).default('payment-gateway-sim'),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  COOKIE_SECURE: booleanFromString('true'),
+  AUTH_MAX_FAILED_LOGINS: z.coerce.number().int().min(1).max(100).default(5),
+  AUTH_LOCK_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
 });
 
 export type Env = z.infer<typeof envSchema>;

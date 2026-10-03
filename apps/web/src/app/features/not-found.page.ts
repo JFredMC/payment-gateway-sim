@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
       <div class="card stack">
         <h1>Página no encontrada</h1>
         <p class="muted">La dirección que buscas no existe.</p>
-        <a routerLink="/" class="btn btn-primary">Volver al inicio</a>
+        <a routerLink="/inicio" class="btn btn-primary">Volver al inicio</a>
       </div>
     </div>
   `,

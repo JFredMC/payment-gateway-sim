@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import type { Env } from './config/env.schema';
+import { PUBLISHABLE_KEY_SCHEME, SECRET_KEY_SCHEME } from './modules/api-keys/api-key-auth';
+import { REFRESH_COOKIE_NAME } from './modules/auth/auth.constants';
 
 export const API_PREFIX = 'api/v1';
 export const DOCS_PATH = 'api/docs';
@@ -52,6 +54,16 @@ function setupSwagger(app: INestApplication): void {
           '(`application/problem+json`) with a stable `code`.',
       )
       .setVersion('1.0')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', description: 'Dashboard JWT' })
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', description: 'Secret key: sk_test_…' },
+        SECRET_KEY_SCHEME,
+      )
+      .addBearerAuth(
+        { type: 'http', scheme: 'bearer', description: 'Publishable key: pk_test_…' },
+        PUBLISHABLE_KEY_SCHEME,
+      )
+      .addCookieAuth(REFRESH_COOKIE_NAME)
       .build(),
   );
   SwaggerModule.setup(DOCS_PATH, app, document, {

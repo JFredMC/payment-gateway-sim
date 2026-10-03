@@ -116,6 +116,19 @@ jobs:
           echo
           curl -fsS http://localhost:4200/ | grep -q '<app-root'
           curl -fsS http://localhost:3000/api/docs-json > /dev/null
+          # Merchant sign-up through the nginx proxy (same origin as the SPA).
+          TOKEN=$(curl -fsS -X POST http://localhost:4200/api/v1/auth/register \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"smoke@example.com","password":"Smoke-passw0rd","full_name":"Smoke Test","business_name":"Tienda Smoke"}' \
+            | jq -er .access_token)
+          curl -fsS http://localhost:4200/api/v1/auth/me -H "Authorization: Bearer $TOKEN" \
+            | jq -e '.merchant.business_name == "Tienda Smoke"'
+          # Roll the secret key (shown once) and call the merchant API with it.
+          SK=$(curl -fsS -X POST http://localhost:4200/api/v1/dashboard/api-keys/roll \
+            -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+            -d '{"type":"secret"}' | jq -er .secret)
+          curl -fsS http://localhost:4200/api/v1/account -H "Authorization: Bearer $SK" \
+            | jq -e '.object == "account" and .livemode == false'
 
       - name: Logs on failure
         if: failure()

@@ -3,6 +3,7 @@ import { durationToSeconds, validateDatabaseEnv, validateEnv } from './env.schem
 describe('validateEnv', () => {
   const base = {
     DATABASE_URL: 'postgres://pasarela:pasarela@localhost:5432/pasarela',
+    JWT_ACCESS_SECRET: 'x'.repeat(32),
   };
 
   it('applies defaults for optional variables', () => {
@@ -11,6 +12,10 @@ describe('validateEnv', () => {
     expect(env.NODE_ENV).toBe('development');
     expect(env.DATABASE_SSL).toBe(false);
     expect(env.CORS_ORIGINS).toEqual(['http://localhost:4200']);
+    expect(env.JWT_ACCESS_TTL).toBe(900);
+    expect(env.REFRESH_TOKEN_TTL_DAYS).toBe(7);
+    expect(env.COOKIE_SECURE).toBe(true);
+    expect(env.AUTH_MAX_FAILED_LOGINS).toBe(5);
   });
 
   it('parses and coerces provided values', () => {
@@ -26,11 +31,15 @@ describe('validateEnv', () => {
   });
 
   it('fails fast with a clear message when a required variable is missing', () => {
-    expect(() => validateEnv({})).toThrow(/DATABASE_URL/);
+    expect(() => validateEnv({})).toThrow(/DATABASE_URL[\s\S]*JWT_ACCESS_SECRET/);
   });
 
   it('rejects a non-postgres DATABASE_URL', () => {
     expect(() => validateEnv({ ...base, DATABASE_URL: 'mysql://x' })).toThrow(/postgres/);
+  });
+
+  it('rejects a short JWT secret', () => {
+    expect(() => validateEnv({ ...base, JWT_ACCESS_SECRET: 'short' })).toThrow(/at least 32/);
   });
 });
 

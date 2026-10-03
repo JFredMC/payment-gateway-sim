@@ -28,7 +28,22 @@ describe('Health (e2e)', () => {
 
   it('serves the OpenAPI document', async () => {
     const res = await request(ctx.app.getHttpServer()).get('/api/docs-json').expect(200);
-    expect(Object.keys(res.body.paths)).toEqual(expect.arrayContaining(['/api/v1/health']));
+    expect(Object.keys(res.body.paths)).toEqual(
+      expect.arrayContaining([
+        '/api/v1/health',
+        '/api/v1/auth/register',
+        '/api/v1/auth/login',
+        '/api/v1/auth/refresh',
+        '/api/v1/auth/logout',
+        '/api/v1/auth/me',
+        '/api/v1/account',
+        '/api/v1/dashboard/api-keys',
+        '/api/v1/dashboard/api-keys/roll',
+      ]),
+    );
+    expect(Object.keys(res.body.components.securitySchemes)).toEqual(
+      expect.arrayContaining(['bearer', 'secret_key', 'publishable_key']),
+    );
   });
 
   it('returns RFC 9457 problem details for unknown routes', async () => {
