@@ -1,0 +1,336 @@
+<div class="page stack">
+  <header class="page-header row">
+    <div class="spacer">
+      <h1>Webhooks</h1>
+      <p class="muted">Recibe en tu servidor los eventos de tus pagos, firmados con HMAC-SHA256.</p>
+    </div>
+    @if (!showForm()) {
+      <button type="button" class="btn btn-primary" (click)="showForm.set(true)">
+        <app-icon name="plus" [size]="18" /> Agregar endpoint
+      </button>
+    }
+  </header>
+
+  @if (showForm()) {
+    <section class="card" aria-labelledby="new-endpoint-title">
+      <h2 id="new-endpoint-title" class="card-title">Nuevo endpoint</h2>
+      <form (submit)="$event.preventDefault(); create()" novalidate>
+        <div class="field">
+          <label for="wh-url">URL del endpoint</label>
+          <input
+            id="wh-url"
+            class="input"
+            type="url"
+            placeholder="https://tu-tienda.com/webhooks/pasarela"
+            [value]="url()"
+            (input)="url.set($any($event.target).value)"
+          />
+          @if (formErrors().url; as err) {
+            <span class="field-error">{{ err }}</span>
+          }
+        </div>
+        <div class="field">
+          <label for="wh-description">Descripción (opcional)</label>
+          <input
+            id="wh-description"
+            class="input"
+            [value]="description()"
+            (input)="description.set($any($event.target).value)"
+          />
+        </div>
+        <label class="check field">
+          <input
+            type="checkbox"
+            [checked]="allEvents()"
+            (change)="allEvents.set($any($event.target).checked)"
+          />
+          Todos los eventos
+        </label>
+        @if (!allEvents()) {
+          <fieldset class="events">
+            <legend class="label">Eventos</legend>
+            @for (type of eventTypes; track type) {
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [checked]="selectedEvents().has(type)"
+                  (change)="toggleEvent(type, $any($event.target).checked)"
+                />
+                {{ eventLabels[type] }} <span class="code-inline muted small">{{ type }}</span>
+              </label>
+            }
+          </fieldset>
+        }
+        @if (formErrors().events; as err) {
+          <p class="field-error">{{ err }}</p>
+        }
+        <app-problem-alert [problem]="formProblem()" />
+        <div class="row">
+          <button type="submit" class="btn btn-primary" [disabled]="creating()">
+            {{ creating() ? 'Guardando…' : 'Guardar endpoint' }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="showForm.set(false)">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="card" aria-labelledby="endpoints-title">
+    <div class="section-head">
+      <h2 id="endpoints-title">Endpoints</h2>
+    </div>
+    <app-problem-alert
+      [problem]="endpointsProblem()"
+      [showRetry]="true"
+      (retry)="loadEndpoints()"
+    />
+    @if (endpoints(); as list) {
+      @if (list.length === 0) {
+        <p class="muted small">
+          Aún no tienes endpoints. Agrega uno (por ejemplo una URL de webhook.site) para ver las
+          entregas firmadas.
+        </p>
+      } @else {
+        <ul class="list-plain" data-testid="endpoints">
+          @for (e of list; track e.id) {
+            <li class="endpoint" [attr.data-endpoint]="e.id">
+              <div class="row">
+                <span class="endpoint-url spacer">{{ e.url }}</span>
+                <app-badge [tone]="e.status === 'enabled' ? 'success' : 'neutral'">
+                  {{ e.status === 'enabled' ? 'Habilitado' : 'Deshabilitado' }}
+                </app-badge>
+              </div>
+              @if (e.description) {
+                <p class="small muted">{{ e.description }}</p>
+              }
+              <p class="small">{{ eventsLabel(e) }}</p>
+              <div class="key-row">
+                <span class="small muted">Secreto de firma</span>
+                <code class="code-inline key" data-testid="endpoint-secret">{{
+                  revealedSecrets().has(e.id) ? e.secret : maskSecret(e.secret)
+                }}</code>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="toggleSecret(e.id)">
+                  {{ revealedSecrets().has(e.id) ? 'Ocultar' : 'Mostrar' }}
+                </button>
+                <app-copy-button [value]="e.secret" label="Copiar secreto de firma" />
+              </div>
+              @if (confirm(); as c) {
+                @if (c.id === e.id) {
+                  <div class="alert alert-info row">
+                    <span class="spacer">
+                      {{
+                        c.action === 'roll'
+                          ? 'El secreto actual dejará de ser válido de inmediato.'
+                          : 'Se eliminará el endpoint y su historial de entregas.'
+                      }}
+                    </span>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      [disabled]="busyEndpoint() === e.id"
+                      (click)="c.action === 'roll' ? rollSecret(e.id) : remove(e.id)"
+                    >
+                      {{ c.action === 'roll' ? 'Rotar secreto' : 'Eliminar' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" (click)="confirm.set(null)">
+                      Cancelar
+                    </button>
+                  </div>
+                }
+              }
+              <div class="row">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  [disabled]="busyEndpoint() === e.id"
+                  (click)="setStatus(e)"
+                >
+                  {{ e.status === 'enabled' ? 'Deshabilitar' : 'Habilitar' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  (click)="confirm.set({ id: e.id, action: 'roll' })"
+                >
+                  Rotar secreto
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  (click)="confirm.set({ id: e.id, action: 'delete' })"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    } @else if (!endpointsProblem()) {
+      <div class="skeleton" style="height: 6rem"></div>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="deliveries-title">
+    <div class="section-head">
+      <h2 id="deliveries-title">Entregas</h2>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="loadDeliveries()">
+        <app-icon name="refresh" [size]="14" /> Actualizar
+      </button>
+    </div>
+    <div class="row" role="group" aria-label="Filtrar entregas">
+      @for (f of deliveryFilters; track f.label) {
+        <button
+          type="button"
+          class="chip"
+          [attr.aria-pressed]="deliveryStatus() === f.value"
+          (click)="filterDeliveries(f.value)"
+        >
+          {{ f.label }}
+        </button>
+      }
+    </div>
+    <app-problem-alert [problem]="deliveriesProblem()" />
+
+    @if (deliveries()) {
+      @if (visibleDeliveries().length === 0) {
+        <p class="muted small" style="margin-top: 1rem">No hay entregas para mostrar.</p>
+      } @else {
+        <ul class="list-plain deliveries" data-testid="deliveries">
+          @for (d of visibleDeliveries(); track d.id) {
+            <li [attr.data-delivery]="d.id">
+              <button
+                type="button"
+                class="delivery-row"
+                [attr.aria-expanded]="expanded() === d.id"
+                (click)="expand(d.id)"
+              >
+                <app-badge [tone]="deliveryTones[d.status]">{{
+                  deliveryLabels[d.status]
+                }}</app-badge>
+                <span class="delivery-main">
+                  <span>{{ eventLabels[d.event.type] }}</span>
+                  <span class="small muted">{{ d.endpoint.url }}</span>
+                </span>
+                <span class="small muted">
+                  {{ d.response_status ? 'HTTP ' + d.response_status : d.error_code ? '—' : '' }}
+                  · {{ d.attempts }}/{{ d.max_attempts }}
+                </span>
+              </button>
+              @if (expanded() === d.id) {
+                @let full = details()[d.id] ?? d;
+                <div class="delivery-detail" data-testid="delivery-detail">
+                  <dl class="dl">
+                    <dt>Evento</dt>
+                    <dd>
+                      <span class="code-inline">{{ full.event.type }}</span> ·
+                      <span class="code-inline">{{ full.event.id }}</span>
+                    </dd>
+                    @if (full.event.payment_intent) {
+                      <dt>Pago</dt>
+                      <dd>
+                        <a
+                          [routerLink]="['/pagos', full.event.payment_intent]"
+                          class="code-inline"
+                          >{{ full.event.payment_intent }}</a
+                        >
+                      </dd>
+                    }
+                    <dt>Creada</dt>
+                    <dd>{{ full.created_at | dateTime }}</dd>
+                    @if (full.next_attempt_at) {
+                      <dt>Próximo intento</dt>
+                      <dd>{{ full.next_attempt_at | dateTime }}</dd>
+                    }
+                    @if (full.error_code) {
+                      <dt>Último error</dt>
+                      <dd>{{ errorLabels[full.error_code] }}</dd>
+                    }
+                  </dl>
+                  @if (full.attempt_log.length > 0) {
+                    <table class="attempts">
+                      <caption class="sr-only">
+                        Intentos de entrega
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Fecha</th>
+                          <th scope="col">Respuesta</th>
+                          <th scope="col">Duración</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (a of full.attempt_log; track a.attempt) {
+                          <tr>
+                            <td>{{ a.attempt }}{{ a.manual ? ' (manual)' : '' }}</td>
+                            <td>{{ a.at | dateTime }}</td>
+                            <td>
+                              {{
+                                a.response_status
+                                  ? 'HTTP ' + a.response_status
+                                  : errorLabels[a.error_code!]
+                              }}
+                            </td>
+                            <td>{{ a.duration_ms }} ms</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  }
+                  @if (full.response_body) {
+                    <div>
+                      <p class="label">Respuesta del endpoint</p>
+                      <pre class="code">{{ full.response_body }}</pre>
+                    </div>
+                  }
+                  @if (full.payload) {
+                    <div>
+                      <p class="label">Payload enviado</p>
+                      <pre class="code" data-testid="delivery-payload">{{
+                        pretty(full.payload)
+                      }}</pre>
+                    </div>
+                  }
+                  <div>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm"
+                      [disabled]="retrying() === d.id"
+                      (click)="retry(d.id)"
+                    >
+                      <app-icon name="refresh" [size]="14" />
+                      {{ retrying() === d.id ? 'Reenviando…' : 'Reenviar ahora' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        @if (nextCursor()) {
+          <div class="row" style="justify-content: center; margin-top: 0.75rem">
+            <button type="button" class="btn btn-ghost btn-sm" (click)="moreDeliveries()">
+              Cargar más
+            </button>
+          </div>
+        }
+      }
+    } @else {
+      <div class="skeleton" style="height: 8rem; margin-top: 1rem"></div>
+    }
+  </section>
+
+  <section class="card stack" aria-labelledby="verify-title">
+    <h2 id="verify-title" class="card-title">Verifica la firma</h2>
+    <p class="small">
+      Cada entrega trae el header <span class="code-inline">{{ signatureHeader }}: t=…,v1=…</span>.
+      Calcula <span class="code-inline">HMAC-SHA256(secreto, t + "." + cuerpo)</span> sobre el
+      cuerpo crudo, compáralo en tiempo constante con <span class="code-inline">v1</span> y rechaza
+      timestamps con más de 5 minutos. Responde 2xx para confirmar; si no, reintentamos con backoff
+      exponencial hasta 6 veces.
+    </p>
+  </section>
+</div>

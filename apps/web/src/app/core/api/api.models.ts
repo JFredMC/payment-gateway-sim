@@ -1,4 +1,10 @@
 import type { CardBrand } from '../../domain/cards';
+import type { EventType } from '../../domain/events';
+import type {
+  WebhookDeliveryStatus,
+  WebhookEndpointStatus,
+  WebhookErrorCode,
+} from '../../domain/webhooks';
 import type {
   PaymentIntentStatus,
   PaymentMethodType,
@@ -159,3 +165,102 @@ export type CreatePaymentMethodBody =
       nequi: { phone: string };
       billing_details?: { name?: string; email?: string };
     };
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+export interface DashboardSummary {
+  object: 'dashboard_summary';
+  currency: 'COP';
+  period: { days: number; from: string; to: string; time_zone: string };
+  gross_volume: number;
+  refunded_amount: number;
+  net_volume: number;
+  succeeded_count: number;
+  average_ticket: number;
+  approval_rate: number | null;
+  failed_attempts: number;
+  pending_count: number;
+  by_method: { type: PaymentMethodType; count: number; volume: number }[];
+  daily: { date: string; volume: number; count: number }[];
+}
+
+export interface GatewayEvent {
+  id: string;
+  object: 'event';
+  type: EventType;
+  created_at: string;
+  livemode: false;
+  data: { object: Record<string, unknown> };
+}
+
+export interface DeliveryAttempt {
+  attempt: number;
+  at: string;
+  response_status: number | null;
+  duration_ms: number;
+  error_code: WebhookErrorCode | null;
+  manual: boolean;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  object: 'webhook_delivery';
+  endpoint: { id: string; url: string | null };
+  event: { id: string; type: EventType; payment_intent: string | null };
+  status: WebhookDeliveryStatus;
+  attempts: number;
+  max_attempts: number;
+  next_attempt_at: string | null;
+  last_attempt_at: string | null;
+  response_status: number | null;
+  response_body: string | null;
+  error_code: WebhookErrorCode | null;
+  duration_ms: number | null;
+  attempt_log: DeliveryAttempt[];
+  delivered_at: string | null;
+  created_at: string;
+  payload?: GatewayEvent;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  object: 'webhook_endpoint';
+  url: string;
+  description: string | null;
+  enabled_events: string[];
+  status: WebhookEndpointStatus;
+  secret: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentIntentDetail {
+  object: 'payment_intent_detail';
+  payment_intent: PaymentIntent;
+  refunds: Refund[];
+  timeline: GatewayEvent[];
+  webhook_deliveries: WebhookDelivery[];
+}
+
+export interface ApiKey {
+  id: string;
+  object: 'api_key';
+  type: 'publishable' | 'secret';
+  token: string;
+  secret?: string;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+export interface CreatePaymentIntentBody {
+  amount: number;
+  description?: string;
+  customer_email?: string;
+  payment_method_types?: PaymentMethodType[];
+  return_url?: string;
+}
+
+export type RefundReason = 'duplicate' | 'fraudulent' | 'requested_by_customer';
+export type CancellationReason = 'duplicate' | 'fraudulent' | 'requested_by_customer' | 'abandoned';

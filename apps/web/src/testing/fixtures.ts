@@ -1,5 +1,13 @@
 import type { ComponentFixture } from '@angular/core/testing';
-import type { AuthResponse, CheckoutView, ProblemDetails, User } from '../app/core/api/api.models';
+import type {
+  AuthResponse,
+  CheckoutView,
+  PaymentIntent,
+  PaymentIntentDetail,
+  PaymentMethod,
+  ProblemDetails,
+  User,
+} from '../app/core/api/api.models';
 
 /** Test-only fixtures and DOM helpers (excluded from the app build). */
 
@@ -84,6 +92,68 @@ export function checkoutView(overrides: Partial<CheckoutView> = {}): CheckoutVie
     max_attempts: 3,
     return_url: null,
     created_at: '2026-10-02T15:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export function paymentIntent(overrides: Partial<PaymentIntent> = {}): PaymentIntent {
+  return {
+    id: 'pi_test123',
+    object: 'payment_intent',
+    amount: 8_990_000,
+    amount_received: 8_990_000,
+    amount_refunded: 0,
+    refund_status: 'none',
+    currency: 'COP',
+    status: 'succeeded',
+    description: 'Audífonos inalámbricos',
+    customer_email: null,
+    metadata: {},
+    payment_method_types: ['card', 'pse', 'nequi'],
+    payment_method: cardMethod(),
+    client_secret: 'pi_test123_secret_x',
+    last_payment_error: null,
+    next_action: null,
+    attempts: 1,
+    return_url: null,
+    cancellation_reason: null,
+    canceled_at: null,
+    succeeded_at: '2026-10-02T15:01:00.000Z',
+    created_at: '2026-10-02T15:00:00.000Z',
+    livemode: false,
+    ...overrides,
+  };
+}
+
+export function paymentDetail(pi: PaymentIntent = paymentIntent()): PaymentIntentDetail {
+  return {
+    object: 'payment_intent_detail',
+    payment_intent: pi,
+    refunds: [],
+    timeline: [
+      {
+        id: 'evt_1',
+        object: 'event',
+        type: 'payment_intent.created',
+        created_at: pi.created_at,
+        livemode: false,
+        data: { object: {} },
+      },
+    ],
+    webhook_deliveries: [],
+  };
+}
+
+export function cardMethod(overrides: Partial<PaymentMethod> = {}): PaymentMethod {
+  return {
+    id: 'pm_test1',
+    object: 'payment_method',
+    type: 'card',
+    card: { brand: 'visa', last4: '4242', exp_month: 12, exp_year: 2034, funding: 'credit' },
+    pse: null,
+    nequi: null,
+    billing_details: { name: 'Ana Gómez', email: null },
+    created_at: '2026-10-02T15:00:30.000Z',
     ...overrides,
   };
 }

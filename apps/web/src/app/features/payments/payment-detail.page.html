@@ -1,0 +1,239 @@
+<div class="page stack">
+  <a routerLink="/pagos" class="small back"><app-icon name="arrow-left" [size]="14" /> Pagos</a>
+
+  @if (notFound()) {
+    <div class="card empty">
+      <h1>Pago no encontrado</h1>
+      <p>No existe un pago con ese identificador en tu comercio.</p>
+    </div>
+  } @else if (loadProblem(); as p) {
+    <app-problem-alert [problem]="p" [showRetry]="true" (retry)="load()" />
+  } @else if (detail(); as d) {
+    @let pi = d.payment_intent;
+    <header class="card head">
+      <div class="head-main">
+        <p class="muted small">Pago</p>
+        <h1 class="amount-lg" data-testid="detail-amount">{{ pi.amount | cop }}</h1>
+        <div class="row">
+          <app-badge [tone]="statusTones[pi.status]" data-testid="detail-status">{{
+            statusLabels[pi.status]
+          }}</app-badge>
+          @if (pi.refund_status === 'full') {
+            <app-badge tone="neutral">Reembolsado</app-badge>
+          } @else if (pi.refund_status === 'partial') {
+            <app-badge tone="neutral">Reembolso parcial · {{ pi.amount_refunded | cop }}</app-badge>
+          }
+        </div>
+        <p class="small muted id-line">
+          <span class="code-inline">{{ pi.id }}</span>
+          <app-copy-button [value]="pi.id" text="Copiar ID" label="Copiar ID del pago" />
+        </p>
+      </div>
+      <div class="head-actions">
+        @if (canCancel()) {
+          <a
+            class="btn btn-primary"
+            [href]="link()"
+            target="_blank"
+            rel="noopener"
+            data-testid="detail-checkout"
+          >
+            <app-icon name="external" [size]="16" /> Abrir checkout
+          </a>
+          <app-copy-button [value]="link()" text="Copiar enlace" label="Copiar enlace de pago" />
+          <button type="button" class="btn btn-ghost" (click)="open('cancel')">
+            Cancelar pago
+          </button>
+        }
+        @if (canRefund()) {
+          <button type="button" class="btn btn-primary" (click)="open('refund')">
+            <app-icon name="refund" [size]="16" /> Reembolsar
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (notice(); as n) {
+      <p class="alert alert-success" role="status">{{ n }}</p>
+    }
+
+    @if (panel() === 'refund') {
+      <section class="card" aria-labelledby="refund-title">
+        <h2 id="refund-title" class="card-title">Reembolsar pago</h2>
+        <form class="refund-form" (submit)="$event.preventDefault(); refund()" novalidate>
+          <div class="field">
+            <label for="refund-amount">Monto a reembolsar (COP)</label>
+            <input
+              id="refund-amount"
+              class="input"
+              inputmode="decimal"
+              [value]="refundAmount()"
+              (input)="refundAmount.set($any($event.target).value)"
+            />
+            <span class="hint"
+              >Disponible: {{ refundable() | cop }}. Usa un monto menor para un reembolso
+              parcial.</span
+            >
+            @if (refundError(); as err) {
+              <span class="field-error">{{ err }}</span>
+            }
+          </div>
+          <div class="field">
+            <label for="refund-reason">Motivo (opcional)</label>
+            <select
+              id="refund-reason"
+              class="input"
+              (change)="refundReason.set($any(reasonValue($event)))"
+            >
+              <option value="">Sin motivo</option>
+              @for (r of refundReasons; track r[0]) {
+                <option [value]="r[0]">{{ r[1] }}</option>
+              }
+            </select>
+          </div>
+          <app-problem-alert [problem]="actionProblem()" />
+          <div class="row">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">
+              {{ busy() ? 'Reembolsando…' : 'Confirmar reembolso' }}
+            </button>
+            <button type="button" class="btn btn-ghost" (click)="panel.set('none')">Volver</button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (panel() === 'cancel') {
+      <section class="card" aria-labelledby="cancel-title">
+        <h2 id="cancel-title" class="card-title">¿Cancelar este pago?</h2>
+        <p class="muted small">
+          El enlace de checkout dejará de aceptar pagos. Esta acción no se puede deshacer.
+        </p>
+        <div class="field">
+          <label for="cancel-reason">Motivo (opcional)</label>
+          <select
+            id="cancel-reason"
+            class="input"
+            (change)="cancelReason.set($any(reasonValue($event)))"
+          >
+            <option value="">Sin motivo</option>
+            @for (r of cancelReasons; track r[0]) {
+              <option [value]="r[0]">{{ r[1] }}</option>
+            }
+          </select>
+        </div>
+        <app-problem-alert [problem]="actionProblem()" />
+        <div class="row">
+          <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="cancel()">
+            {{ busy() ? 'Cancelando…' : 'Confirmar cancelación' }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="panel.set('none')">Volver</button>
+        </div>
+      </section>
+    }
+
+    <div class="grid">
+      <section class="card" aria-labelledby="details-title">
+        <h2 id="details-title" class="card-title">Detalles</h2>
+        <dl class="dl">
+          <dt>Creado</dt>
+          <dd>{{ pi.created_at | dateTime }}</dd>
+          <dt>Descripción</dt>
+          <dd>{{ pi.description || '—' }}</dd>
+          <dt>Correo del comprador</dt>
+          <dd>{{ pi.customer_email || '—' }}</dd>
+          <dt>Medios aceptados</dt>
+          <dd>
+            @for (t of pi.payment_method_types; track t; let last = $last) {
+              {{ methodLabels[t] }}{{ last ? '' : ', ' }}
+            }
+          </dd>
+          <dt>Medio de pago</dt>
+          <dd data-testid="detail-method">{{ methodSummary(pi.payment_method) }}</dd>
+          <dt>Intentos</dt>
+          <dd>{{ pi.attempts }} de 3</dd>
+          @if (declineMessage(); as m) {
+            <dt>Último rechazo</dt>
+            <dd>
+              {{ m }}
+              <span class="code-inline muted">({{ pi.last_payment_error?.decline_code }})</span>
+            </dd>
+          }
+          @if (pi.cancellation_reason) {
+            <dt>Motivo de cancelación</dt>
+            <dd>
+              {{ cancelReasonLabels[pi.cancellation_reason] ?? pi.cancellation_reason }}
+            </dd>
+          }
+          <dt>Reembolsado</dt>
+          <dd>{{ pi.amount_refunded | cop }}</dd>
+        </dl>
+      </section>
+
+      <section class="card" aria-labelledby="timeline-title">
+        <h2 id="timeline-title" class="card-title">Línea de tiempo</h2>
+        <ol class="list-plain timeline" data-testid="timeline">
+          @for (e of d.timeline; track e.id) {
+            <li [class]="'tl tl-' + e.type.split('.')[1]">
+              <span class="tl-dot" aria-hidden="true"></span>
+              <div>
+                <p class="tl-title">{{ eventLabels[e.type] }}</p>
+                <p class="small muted">
+                  {{ e.created_at | dateTime }} · <span class="code-inline">{{ e.type }}</span>
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+
+    @if (d.refunds.length > 0) {
+      <section class="card" aria-labelledby="refunds-title">
+        <h2 id="refunds-title" class="card-title">Reembolsos</h2>
+        <ul class="list-plain rows" data-testid="refunds">
+          @for (r of d.refunds; track r.id) {
+            <li class="row">
+              <strong>{{ r.amount | cop }}</strong>
+              <span class="muted small">{{
+                r.reason ? refundReasonLabels[r.reason] : 'Sin motivo'
+              }}</span>
+              <span class="spacer"></span>
+              <span class="small muted">{{ r.created_at | dateTime }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="card" aria-labelledby="hooks-title">
+      <div class="section-head">
+        <h2 id="hooks-title">Webhooks de este pago</h2>
+        <a routerLink="/desarrolladores/webhooks" class="small">Configurar webhooks</a>
+      </div>
+      @if (d.webhook_deliveries.length === 0) {
+        <p class="muted small">
+          No hay entregas. Registra un endpoint para recibir los eventos de tus pagos.
+        </p>
+      } @else {
+        <ul class="list-plain rows" data-testid="payment-deliveries">
+          @for (w of d.webhook_deliveries; track w.id) {
+            <li class="row">
+              <app-badge [tone]="deliveryTones[w.status]">{{ deliveryLabels[w.status] }}</app-badge>
+              <span>{{ eventLabels[w.event.type] }}</span>
+              <span class="small muted url">{{ w.endpoint.url }}</span>
+              <span class="spacer"></span>
+              <a
+                class="small"
+                routerLink="/desarrolladores/webhooks"
+                [queryParams]="{ entrega: w.id }"
+                >Ver entrega</a
+              >
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  } @else {
+    <div class="skeleton" style="height: 12rem" aria-busy="true"></div>
+  }
+</div>

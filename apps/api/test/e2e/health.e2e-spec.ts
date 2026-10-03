@@ -56,6 +56,11 @@ describe('Health (e2e)', () => {
         '/api/v1/dashboard/webhook-deliveries',
         '/api/v1/dashboard/webhook-deliveries/{id}',
         '/api/v1/dashboard/webhook-deliveries/{id}/retry',
+        '/api/v1/dashboard/summary',
+        '/api/v1/dashboard/payment-intents',
+        '/api/v1/dashboard/payment-intents/{id}',
+        '/api/v1/dashboard/payment-intents/{id}/cancel',
+        '/api/v1/dashboard/payment-intents/{id}/refunds',
       ]),
     );
     expect(Object.keys(res.body.components.securitySchemes)).toEqual(

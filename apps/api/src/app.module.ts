@@ -7,6 +7,7 @@ import { validateEnv } from './config/env.schema';
 import { DatabaseModule } from './database/database.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -30,6 +31,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     AuthModule,
     PaymentsModule,
     WebhooksModule,
+    DashboardModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

@@ -9,7 +9,12 @@ export interface NavItem {
   icon: IconName;
 }
 
-export const NAV_ITEMS: NavItem[] = [{ path: '/inicio', label: 'Inicio', icon: 'home' }];
+export const NAV_ITEMS: NavItem[] = [
+  { path: '/inicio', label: 'Inicio', icon: 'home' },
+  { path: '/pagos', label: 'Pagos', icon: 'list' },
+  { path: '/desarrolladores/claves', label: 'Claves API', icon: 'key' },
+  { path: '/desarrolladores/webhooks', label: 'Webhooks', icon: 'webhook' },
+];
 
 /** Merchant dashboard layout: top bar on desktop, bottom tab bar on mobile. */
 @Component({

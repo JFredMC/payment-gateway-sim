@@ -1,0 +1,78 @@
+<div class="page stack">
+  <header class="page-header row">
+    <div class="spacer">
+      <h1>Pagos</h1>
+      <p class="muted">Todos los payment intents de tu comercio.</p>
+    </div>
+    <a routerLink="/pagos/nuevo" class="btn btn-primary"
+      ><app-icon name="plus" [size]="18" /> Crear pago</a
+    >
+  </header>
+
+  <div class="filters" role="group" aria-label="Filtrar por estado">
+    @for (f of filters; track f.label) {
+      <button
+        type="button"
+        class="chip"
+        [attr.aria-pressed]="status() === f.value"
+        (click)="select(f.value)"
+      >
+        {{ f.label }}
+      </button>
+    }
+  </div>
+
+  <app-problem-alert [problem]="problem()" [showRetry]="true" (retry)="reload()" />
+
+  <section class="card table-card">
+    @if (items(); as list) {
+      @if (list.length === 0) {
+        <div class="empty">
+          <p>No hay pagos {{ status() ? 'con este estado' : 'todavía' }}.</p>
+        </div>
+      } @else {
+        <table class="table" data-testid="payments-table">
+          <thead>
+            <tr>
+              <th scope="col">Monto</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Medio de pago</th>
+              <th scope="col">Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of list; track p.id) {
+              <tr>
+                <td data-label="Monto">
+                  <a [routerLink]="['/pagos', p.id]" class="amount-link">{{ p.amount | cop }}</a>
+                  @if (p.amount_refunded > 0) {
+                    <span class="small muted refunded">
+                      {{ p.refund_status === 'full' ? 'Reembolsado' : 'Reemb. '
+                      }}{{ p.refund_status === 'full' ? '' : (p.amount_refunded | cop) }}
+                    </span>
+                  }
+                </td>
+                <td data-label="Estado">
+                  <app-badge [tone]="statusTones[p.status]">{{ statusLabels[p.status] }}</app-badge>
+                </td>
+                <td data-label="Descripción" class="desc">{{ p.description || '—' }}</td>
+                <td data-label="Medio">{{ methodSummary(p.payment_method) }}</td>
+                <td data-label="Fecha" class="small muted nowrap">{{ p.created_at | dateTime }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (nextCursor()) {
+          <div class="more">
+            <button type="button" class="btn btn-ghost" [disabled]="loadingMore()" (click)="more()">
+              {{ loadingMore() ? 'Cargando…' : 'Cargar más' }}
+            </button>
+          </div>
+        }
+      }
+    } @else {
+      <div class="skeleton" style="height: 16rem" aria-busy="true"></div>
+    }
+  </section>
+</div>

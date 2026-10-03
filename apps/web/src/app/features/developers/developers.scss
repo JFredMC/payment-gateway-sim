@@ -1,0 +1,102 @@
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.key {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  min-width: 0;
+}
+
+.endpoint {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.endpoint + .endpoint {
+  border-top: 1px solid var(--c-border);
+  padding-top: 1rem;
+}
+
+.endpoint-url {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.events {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.35rem 1rem;
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.events legend {
+  margin-bottom: 0.35rem;
+}
+
+.deliveries li {
+  border-top: 1px solid var(--c-border);
+}
+
+.delivery-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.7rem 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.delivery-row:hover,
+.delivery-row[aria-expanded='true'] {
+  background: var(--c-surface-2);
+}
+
+.delivery-main {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.delivery-main .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delivery-detail {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem 1rem;
+}
+
+.attempts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.attempts th,
+.attempts td {
+  padding: 0.4rem 0.35rem;
+  border-bottom: 1px solid var(--c-border);
+  text-align: left;
+}
+
+.attempts th {
+  color: var(--c-muted);
+  font-weight: 600;
+}

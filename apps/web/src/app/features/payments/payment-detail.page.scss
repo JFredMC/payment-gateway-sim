@@ -1,0 +1,120 @@
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.head-main {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.head-main p,
+.head-main h1 {
+  margin: 0;
+}
+
+.id-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.head-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.refund-form {
+  max-width: 28rem;
+}
+
+.timeline {
+  display: grid;
+  gap: 0;
+}
+
+.tl {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: 0.6rem;
+  padding-bottom: 0.9rem;
+}
+
+.tl:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: calc(0.625rem - 1px);
+  top: 1rem;
+  bottom: 0;
+  width: 2px;
+  background: var(--c-border);
+}
+
+.tl-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin: 0.3rem auto 0;
+  border-radius: 999px;
+  background: var(--c-muted);
+  box-shadow: 0 0 0 3px var(--c-surface);
+}
+
+.tl-succeeded .tl-dot {
+  background: var(--c-success);
+}
+
+.tl-payment_failed .tl-dot,
+.tl-canceled .tl-dot {
+  background: var(--c-danger);
+}
+
+.tl-requires_action .tl-dot,
+.tl-processing .tl-dot {
+  background: #6366f1;
+}
+
+.tl-created .tl-dot {
+  background: var(--c-primary);
+}
+
+.tl p {
+  margin: 0;
+}
+
+.tl-title {
+  font-weight: 600;
+}
+
+.rows li {
+  padding: 0.6rem 0;
+}
+
+.rows li + li {
+  border-top: 1px solid var(--c-border);
+}
+
+.url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 18rem;
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

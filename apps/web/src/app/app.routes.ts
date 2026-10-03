@@ -37,6 +37,36 @@ export const routes: Routes = [
         title: 'Inicio · Pasarela',
         loadComponent: () => import('./features/home/home.page').then((m) => m.HomePage),
       },
+      {
+        path: 'pagos',
+        title: 'Pagos · Pasarela',
+        loadComponent: () =>
+          import('./features/payments/payments.page').then((m) => m.PaymentsPage),
+      },
+      {
+        path: 'pagos/nuevo',
+        title: 'Crear pago · Pasarela',
+        loadComponent: () =>
+          import('./features/payments/new-payment.page').then((m) => m.NewPaymentPage),
+      },
+      {
+        path: 'pagos/:id',
+        title: 'Detalle del pago · Pasarela',
+        loadComponent: () =>
+          import('./features/payments/payment-detail.page').then((m) => m.PaymentDetailPage),
+      },
+      {
+        path: 'desarrolladores/claves',
+        title: 'Claves API · Pasarela',
+        loadComponent: () =>
+          import('./features/developers/api-keys.page').then((m) => m.ApiKeysPage),
+      },
+      {
+        path: 'desarrolladores/webhooks',
+        title: 'Webhooks · Pasarela',
+        loadComponent: () =>
+          import('./features/developers/webhooks.page').then((m) => m.WebhooksPage),
+      },
     ],
   },
   {

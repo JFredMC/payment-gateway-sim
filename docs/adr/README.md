@@ -12,3 +12,4 @@ reescriben: si una decisión cambia, un ADR nuevo enlaza al que reemplaza.
 | [0004](0004-payment-intents-tarjetas-e-idempotencia.md) | Payment intents: máquina de estados, tokenización e idempotencia  | Aceptado |
 | [0005](0005-checkout-alojado.md)                        | Checkout alojado: enlace con client secret y desafíos simulados   | Aceptado |
 | [0006](0006-webhooks-firmados.md)                       | Webhooks: outbox transaccional, firma HMAC y reintentos           | Aceptado |
+| [0007](0007-panel-del-comercio.md)                      | Panel del comercio: endpoints propios y KPIs calculados en SQL    | Aceptado |

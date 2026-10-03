@@ -84,6 +84,24 @@ export class WebhookDeliveriesService implements OnModuleInit {
     };
   }
 
+  /** Deliveries of every event of one payment intent (dashboard detail page). */
+  async listForPaymentIntent(
+    merchantId: string,
+    paymentIntentId: string,
+  ): Promise<WebhookDeliveryJson[]> {
+    const rows = await this.repo
+      .createQueryBuilder('d')
+      .innerJoinAndSelect('d.event', 'evt')
+      .leftJoinAndSelect('d.endpoint', 'we')
+      .where('d.merchant_id = :merchantId', { merchantId })
+      .andWhere('evt.payment_intent_id = :paymentIntentId', { paymentIntentId })
+      .orderBy('d.created_at', 'ASC')
+      .addOrderBy('d.id', 'ASC')
+      .limit(100)
+      .getMany();
+    return rows.map((row) => toWebhookDeliveryJson(row));
+  }
+
   async get(merchantId: string, id: string): Promise<WebhookDeliveryJson> {
     return toWebhookDeliveryJson(await this.find(merchantId, id), true);
   }
