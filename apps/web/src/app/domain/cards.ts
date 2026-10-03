@@ -12,7 +12,13 @@ export interface BrandSpec {
 }
 
 export const BRANDS: Record<CardBrand, BrandSpec> = {
-  visa: { brand: 'visa', label: 'Visa', lengths: [13, 16, 19], cvcLength: 3, gaps: [4, 8, 12] },
+  visa: {
+    brand: 'visa',
+    label: 'Visa',
+    lengths: [13, 16, 19],
+    cvcLength: 3,
+    gaps: [4, 8, 12, 16],
+  },
   mastercard: {
     brand: 'mastercard',
     label: 'Mastercard',
@@ -33,7 +39,7 @@ export const BRANDS: Record<CardBrand, BrandSpec> = {
     label: 'Discover',
     lengths: [16, 19],
     cvcLength: 3,
-    gaps: [4, 8, 12],
+    gaps: [4, 8, 12, 16],
   },
 };
 
