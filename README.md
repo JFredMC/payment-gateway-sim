@@ -7,7 +7,62 @@ reembolsos, `Idempotency-Key` y webhooks firmados con HMAC-SHA256.
 
 Stack: **NestJS 11 · PostgreSQL · Angular 22 · pnpm · Docker Compose · GitHub Actions**.
 
-> 🚧 En construcción. Este README se completa a medida que se integran los módulos.
+[![CI](https://github.com/JFredMC/payment-gateway-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/JFredMC/payment-gateway-sim/actions/workflows/ci.yml)
+[![Demo en GitHub Pages](https://github.com/JFredMC/payment-gateway-sim/actions/workflows/pages.yml/badge.svg)](https://jfredmc.github.io/payment-gateway-sim/)
+
+## Demo en vivo
+
+**👉 https://jfredmc.github.io/payment-gateway-sim/**
+
+La demo es la misma app Angular compilada en _modo demo_: un backend simulado en el
+navegador (con las mismas reglas de dominio que la API) responde a `/api/v1` y guarda
+los datos en `localStorage`. Nada sale del navegador y ningún cobro es real.
+
+| Comercio de prueba | Correo                   | Contraseña |
+| ------------------ | ------------------------ | ---------- |
+| Tienda Aurora      | `ana@tienda-aurora.demo` | `Demo1234` |
+
+- El comercio trae un mes de actividad: pagos aprobados, rechazados, con 3DS, PSE y
+  Nequi, reembolsos, cancelaciones y webhooks (uno de los endpoints simula un receptor
+  caído para ver los reintentos).
+- Puedes registrar tu propio comercio; **Restablecer demo** (en el aviso amarillo)
+  vuelve a los datos iniciales.
+- Flujo sugerido: **Pagos → Crear pago → Abrir checkout**, paga con una tarjeta de
+  prueba (abajo), vuelve al detalle, reembolsa una parte y revisa **Webhooks**.
+- Webhooks en la demo: se firman de verdad (HMAC-SHA256 con Web Crypto), pero el
+  receptor se simula: responde 200 tras verificar la firma; URLs con `falla` responden
+  500, con `timeout` agotan el tiempo y los dominios `.invalid` no conectan.
+
+Tarjetas de prueba (cualquier vencimiento futuro, CVC de 3 dígitos o 4 en Amex):
+
+| Número                | Resultado                         |
+| --------------------- | --------------------------------- |
+| `4242 4242 4242 4242` | Aprobada (Visa)                   |
+| `5555 5555 5555 4444` | Aprobada (Mastercard)             |
+| `3782 822463 10005`   | Aprobada (American Express)       |
+| `4000 0566 5566 5556` | Aprobada (Visa débito)            |
+| `4000 0027 6000 3184` | Pide autenticación 3D Secure      |
+| `4000 0000 0000 0002` | Rechazada (genérico)              |
+| `4000 0000 0000 9995` | Rechazada: fondos insuficientes   |
+| `4000 0000 0000 0069` | Rechazada: tarjeta vencida        |
+| `4000 0000 0000 0127` | Rechazada: CVC incorrecto         |
+| `4000 0000 0000 0119` | Rechazada: error de procesamiento |
+
+PSE y Nequi: elige banco o celular (10 dígitos, empieza por 3) y decide en la pantalla
+simulada del banco o de la app si apruebas o rechazas.
+
+## Capturas
+
+| Panel                                                            | Checkout con 3DS                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| ![Inicio del panel](docs/screenshots/desktop-02-inicio.png)      | ![Desafío 3D Secure](docs/screenshots/desktop-06-checkout-3ds.png) |
+| ![Detalle de pago](docs/screenshots/desktop-08-detalle-pago.png) | ![Registro de webhooks](docs/screenshots/desktop-09-webhooks.png)  |
+
+<p>
+  <img src="docs/screenshots/mobile-02-inicio.png" alt="Panel en móvil" width="220" />
+  <img src="docs/screenshots/mobile-05-checkout.png" alt="Checkout en móvil" width="220" />
+  <img src="docs/screenshots/mobile-08-detalle-pago.png" alt="Detalle de pago en móvil" width="220" />
+</p>
 
 ## Inicio rápido
 
@@ -227,6 +282,25 @@ flowchart LR
 Los KPIs se calculan en PostgreSQL por día calendario de Colombia (America/Bogota); la
 tasa de aprobación cuenta cada intento rechazado. Ver el
 [ADR 0007](docs/adr/0007-panel-del-comercio.md).
+
+## Modo demo (GitHub Pages)
+
+```bash
+pnpm --filter web dev:demo      # http://localhost:4300 con el backend simulado
+pnpm --filter web build:pages   # ng build -c demo (base href /payment-gateway-sim/) + 404.html
+pnpm --filter web e2e:demo      # Playwright contra el build servido como en Pages
+```
+
+- `environment.demo.ts` agrega un interceptor final que responde `/api/v1` con
+  `DemoBackend` (`apps/web/src/app/demo`): mismas rutas, formas JSON, códigos de error
+  problem+json, `Idempotency-Key` y paginación por cursor que la API; las reglas salen del
+  dominio compartido (máquina de estados, Luhn y marcas, tarjetas de prueba, backoff).
+- Como en la API, nunca se guarda el número de tarjeta: solo marca, últimos 4 y el
+  resultado simulado.
+- GitHub Pages no reescribe rutas: `404.html` es una copia de `index.html`, así que los
+  enlaces profundos (`/pagos/pi_…`, `/checkout/…`) funcionan al recargar.
+- `.github/workflows/pages.yml` publica en cada push a `main`. Ver el
+  [ADR 0008](docs/adr/0008-modo-demo-github-pages.md).
 
 ## Decisiones de arquitectura
 
