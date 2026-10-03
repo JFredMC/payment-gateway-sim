@@ -11,7 +11,12 @@ describe('App', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('router-outlet')).not.toBeNull();
   });
 
-  it('has a catch-all route', () => {
-    expect(routes.at(-1)?.path).toBe('**');
+  it('protects the dashboard and uses Spanish paths', () => {
+    const shell = routes.find((r) => r.path === '' && r.children);
+    expect(shell?.canActivate).toHaveLength(1);
+    expect(shell?.children?.map((c) => c.path)).toEqual(expect.arrayContaining(['inicio']));
+    expect(routes.map((r) => r.path)).toEqual(
+      expect.arrayContaining(['ingresar', 'registro', '**']),
+    );
   });
 });

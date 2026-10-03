@@ -1,0 +1,41 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <a routerLink="/inicio" class="brand" aria-label="Pasarela, inicio">
+      <span class="brand-mark"><app-icon name="card" [size]="18" /></span>
+      <span>Pasarela</span>
+      <span class="badge-test" title="Solo pagos simulados">Modo test</span>
+    </a>
+    <nav class="nav-desktop" aria-label="Principal">
+      @for (item of nav; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+    <span class="spacer"></span>
+    <span class="user small muted" data-testid="merchant-name">{{
+      auth.user()?.merchant?.business_name
+    }}</span>
+    <button
+      type="button"
+      class="btn btn-ghost logout"
+      (click)="logout()"
+      aria-label="Cerrar sesión"
+    >
+      <app-icon name="logout" [size]="18" /><span class="logout-label">Salir</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>
+
+<nav class="nav-mobile" aria-label="Principal">
+  @for (item of nav; track item.path) {
+    <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+      <app-icon [name]="item.icon" [size]="22" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+</nav>
