@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { UsersModule } from './modules/users/users.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './modules/users/users.module';
     ApiKeysModule,
     AuthModule,
     PaymentsModule,
+    WebhooksModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

@@ -147,6 +147,56 @@ sequenceDiagram
     A-->>C: succeeded · o rechazo con last_payment_error
 ```
 
+## Webhooks
+
+Desde el panel (o con `POST /api/v1/dashboard/webhook-endpoints`) el comercio registra
+URLs y elige qué eventos recibe:
+
+- `payment_intent.created`
+- `payment_intent.processing`
+- `payment_intent.requires_action`
+- `payment_intent.succeeded`
+- `payment_intent.payment_failed`
+- `payment_intent.canceled`
+- `refund.created`
+- `*` (todos)
+
+Cada entrega es un `POST` con el evento en JSON y el header
+`Pasarela-Signature: t=<unix>,v1=<HMAC-SHA256>`.
+
+```mermaid
+flowchart LR
+    TX["Transacción: cambio de estado + evento + webhook_deliveries"] --> Q[("Cola en PostgreSQL")]
+    Q -->|"FOR UPDATE SKIP LOCKED"| W["Worker"]
+    W -->|"POST firmado"| M["Servidor del comercio"]
+    M -->|"2xx"| OK["Entregado"]
+    M -->|"error / timeout"| R["Reintento: 10 s, 50 s, ~4 min, ~21 min, ~1,7 h"]
+    R --> Q
+    R -->|"6 intentos"| F["Fallido (reenvío manual)"]
+```
+
+Verificación en el servidor del comercio (Node.js):
+
+```js
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+// rawBody: el cuerpo EXACTO recibido (sin re-serializar el JSON).
+function verify(rawBody, header, secret, toleranceSeconds = 300) {
+  const parts = Object.fromEntries(header.split(',').map((p) => p.split('=')));
+  const t = Number(parts.t);
+  if (!t || Math.abs(Date.now() / 1000 - t) > toleranceSeconds) return false;
+  const expected = createHmac('sha256', secret).update(`${t}.${rawBody}`).digest();
+  const given = Buffer.from(parts.v1 ?? '', 'hex');
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+```
+
+- La entrega es "al menos una vez": deduplica por `id` de evento (header
+  `Pasarela-Event-Id`).
+- Las URLs deben ser `https` públicas. `WEBHOOK_ALLOW_INSECURE_URLS=true` habilita
+  `http://localhost` solo para desarrollo.
+- Detalles en el [ADR 0006](docs/adr/0006-webhooks-firmados.md).
+
 ## Decisiones de arquitectura
 
 Ver [docs/adr](docs/adr/README.md).
