@@ -103,7 +103,8 @@ export class DashboardService {
       refunded_amount: refunded,
       net_volume: gross - refunded,
       succeeded_count: count,
-      average_ticket: count > 0 ? Math.round(gross / count) : 0,
+      // Whole pesos: COP amounts are shown without cents.
+      average_ticket: count > 0 ? Math.round(gross / count / 100) * 100 : 0,
       approval_rate: attempts > 0 ? Math.round((succeededEvents / attempts) * 1000) / 1000 : null,
       failed_attempts: failedEvents,
       pending_count: Number(pending[0]?.pending ?? 0),
